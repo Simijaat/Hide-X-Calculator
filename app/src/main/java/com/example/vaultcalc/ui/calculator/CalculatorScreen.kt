@@ -60,7 +60,7 @@ fun CalculatorScreen(
             listOf("7", "8", "9", "*"),
             listOf("4", "5", "6", "-"),
             listOf("1", "2", "3", "+"),
-            listOf("0", ".", "=", "")
+            listOf("0", ".", "=", "DEL")
         )
 
         buttons.forEach { row ->
@@ -93,7 +93,7 @@ fun CalculatorButton(
     modifier: Modifier,
     onClick: () -> Unit
 ) {
-    val isAction = symbol in listOf("C", "(", ")", "/", "*", "-", "+", "=")
+    val isAction = symbol in listOf("C", "(", ")", "/", "*", "-", "+", "=", "DEL")
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier

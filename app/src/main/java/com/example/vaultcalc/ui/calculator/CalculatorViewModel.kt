@@ -19,6 +19,8 @@ class CalculatorViewModel @Inject constructor(
     val state: StateFlow<CalculatorState> = _state.asStateFlow()
 
     private var currentInput = ""
+    private var isResult = false
+    private var setupPin: String? = null
 
     fun onAction(action: CalculatorAction) {
         when (action) {
@@ -32,19 +34,57 @@ class CalculatorViewModel @Inject constructor(
         when (symbol) {
             "C" -> {
                 currentInput = ""
+                isResult = false
+                setupPin = null
                 _state.value = _state.value.copy(displayValue = "0")
             }
+            "DEL" -> {
+                if (isResult) {
+                    currentInput = ""
+                    isResult = false
+                } else if (currentInput.isNotEmpty()) {
+                    currentInput = currentInput.dropLast(1)
+                }
+                _state.value = _state.value.copy(displayValue = if (currentInput.isEmpty()) "0" else currentInput)
+            }
             "=" -> {
-                checkVaultAccess()
-                if (!_state.value.navigateToVault) {
-                    calculateResult()
+                if (!securityManager.isPinSet() && currentInput.length >= 4 && currentInput.all { it.isDigit() }) {
+                    if (setupPin == null) {
+                        setupPin = currentInput
+                        currentInput = ""
+                        _state.value = _state.value.copy(displayValue = "0")
+                    } else if (setupPin == currentInput) {
+                        securityManager.setPin(currentInput)
+                        _state.value = _state.value.copy(navigateToVault = true)
+                        currentInput = ""
+                        setupPin = null
+                    } else {
+                        // mismatch, start over
+                        setupPin = null
+                        currentInput = ""
+                        _state.value = _state.value.copy(displayValue = "0")
+                    }
+                } else {
+                    checkVaultAccess()
+                    if (!_state.value.navigateToVault) {
+                        calculateResult()
+                    }
                 }
             }
             else -> {
-                if (_state.value.displayValue == "0" && symbol != ".") {
-                    currentInput = symbol
+                if (isResult) {
+                    if (symbol.all { it.isDigit() } || symbol == ".") {
+                        currentInput = symbol
+                    } else {
+                        currentInput += symbol
+                    }
+                    isResult = false
                 } else {
-                    currentInput += symbol
+                    if (_state.value.displayValue == "0" && symbol != ".") {
+                        currentInput = symbol
+                    } else {
+                        currentInput += symbol
+                    }
                 }
                 _state.value = _state.value.copy(displayValue = currentInput)
             }
@@ -54,6 +94,9 @@ class CalculatorViewModel @Inject constructor(
     private fun calculateResult() {
         try {
             val result = eval(currentInput)
+            if (result.isInfinite() || result.isNaN()) {
+                throw ArithmeticException("Division by zero")
+            }
             // format to remove .0 if it's a whole number
             val formattedResult = if (result == result.toLong().toDouble()) {
                 result.toLong().toString()
@@ -61,10 +104,12 @@ class CalculatorViewModel @Inject constructor(
                 result.toString()
             }
             currentInput = formattedResult
+            isResult = true
             _state.value = _state.value.copy(displayValue = formattedResult)
         } catch (e: Exception) {
             _state.value = _state.value.copy(displayValue = "Error")
             currentInput = ""
+            isResult = true
         }
     }
 
@@ -136,13 +181,6 @@ class CalculatorViewModel @Inject constructor(
         viewModelScope.launch {
             if (securityManager.isPinSet()) {
                 if (securityManager.verifyPin(currentInput)) {
-                    _state.value = _state.value.copy(navigateToVault = true)
-                    currentInput = ""
-                }
-            } else {
-                // If no PIN is set, allow any 4+ digit number to set it
-                if (currentInput.length >= 4 && currentInput.all { it.isDigit() }) {
-                    securityManager.setPin(currentInput)
                     _state.value = _state.value.copy(navigateToVault = true)
                     currentInput = ""
                 }

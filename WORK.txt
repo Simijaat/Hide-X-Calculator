@@ -1,27 +1,30 @@
 # PR1 - Foundation + Private Calculator/Vault
 
 ## What was implemented
-- Initialized a clean Android project with Gradle Kotlin DSL and Jetpack Compose.
-- Implemented a robust Calculator UI and ViewModel logic with a full math expression parser handling precedence and parentheses (`CalculatorScreen.kt`, `CalculatorViewModel.kt`).
-- Designed the private vault foundation using `EncryptedSharedPreferences` for secure PIN storage (`VaultSecurityManager.kt`).
-- Configured Dependency Injection using Hilt (`VaultCalcApplication.kt`, `AppModule.kt`).
-- Set up a dummy private vault screen ready for future features (`VaultScreen.kt`).
-- Implemented auto-routing using Jetpack Compose `LaunchedEffect` to safely navigate when the PIN is correctly entered.
-- Added auto-lock architecture using `ProcessLifecycleOwner` to lock the vault when the app goes into the background, monitored via a `StateFlow`.
-- Excluded shared prefs from cloud/device backups for security.
+- Refactored `VaultSecurityManager.kt` to use PBKDF2 with HMAC-SHA256 for secure PIN hashing. Random salts are generated via `SecureRandom` and stored alongside hashes using Base64 encoding in `EncryptedSharedPreferences`.
+- Added an inactivity timer and auto-lock logic to `VaultSecurityManager.kt`, monitored via a `lifecycleScope` coroutine in `MainActivity.kt`.
+- Applied `FLAG_SECURE` to the `MainActivity` window to block screenshots and recent-task previews, adhering to Android security best practices.
+- Enhanced the `CalculatorViewModel.kt` parser logic to natively handle division by zero (catching `Infinity` and `NaN`), added state management to distinguish between new calculations and active input (`isResult`), and introduced a functional `DEL` action.
+- Built out a discrete, two-step PIN setup flow in `CalculatorViewModel.kt` triggered entirely within the calculator context (enter PIN -> `=` -> verify PIN -> `=`).
+- Added the `DEL` button to the `CalculatorScreen.kt` UI layout.
+- The `VaultScreen.kt` remains a scaffolded dummy screen ready to house feature tools.
 
 ## Important architectural decisions
-- **Jetpack Compose**: Selected for a modern, scalable UI toolkit. Safe side-effects are used for navigation.
+- **Jetpack Compose**: Selected for a modern, scalable UI toolkit.
 - **Hilt (Dagger)**: Essential for maintainable dependency injection, especially as the app grows with VPN, ad-blocking, etc.
-- **EncryptedSharedPreferences**: Used for storing the vault PIN hash. It leverages Android KeyStore for secure, encrypted local storage, which is a best practice for security-focused applications.
+- **EncryptedSharedPreferences**: Used for storing the vault PIN hash and salt. It leverages Android KeyStore for secure, encrypted local storage.
+- **Security Logic**: Hardened by shifting from plaintext PIN storage to a PBKDF2 approach (100,000 iterations, 256-bit key).
 - **MVVM Architecture**: ViewModels manage state, decoupling UI from business logic. StateFlows provide reactive security state to the Navigation graph to force lock-outs.
 
 ## Known Issues / Limitations
-- PIN entry is currently managed via the main calculator display, allowing basic setup and login. A robust implementation would hash the PIN rather than storing it directly (even in EncryptedPrefs).
-- Calculator logic uses a simple recursive descent parser which relies on Doubles and may encounter floating point inaccuracies for some calculations.
+- Calculator logic uses a simple recursive descent parser which relies on Doubles and may encounter floating point inaccuracies for some advanced calculations.
+- While `FLAG_SECURE` prevents screenshots, advanced rooting could still potentially inspect memory.
+
+## Instructions for Next Session
+- Please read WORK.txt FIRST to understand the current architecture before starting PR2.
 
 ## Planned work for PR2–PR5
-- **PR2**: Enhance Calculator Math parsing (evaluate expressions securely). Add a proper PIN setup/change UI, lock-out mechanisms, and background lock.
-- **PR3**: Integrate the Secure Browser and Download Manager within the Vault context.
-- **PR4**: Integrate VPN Service architecture and connections.
-- **PR5**: Integrate Ad/Tracker Blocking engine and tie everything together.
+- **PR2**: Integrate the Secure Browser and Download Manager within the Vault context.
+- **PR3**: Integrate VPN Service architecture and connections.
+- **PR4**: Integrate Ad/Tracker Blocking engine and tie everything together.
+- **PR5**: Final Security Audit, polish, and Release preparation.

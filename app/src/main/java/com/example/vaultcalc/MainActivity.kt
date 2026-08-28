@@ -1,6 +1,7 @@
 package com.example.vaultcalc
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +13,8 @@ import com.example.vaultcalc.data.security.VaultSecurityManager
 import com.example.vaultcalc.ui.theme.VaultCalcTheme
 import com.example.vaultcalc.navigation.VaultCalcNavigation
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,6 +26,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Prevent screenshots and recent-task previews
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
+
+        // Start foreground inactivity tracking
+        lifecycleScope.launch {
+            while (isActive) {
+                delay(30_000) // Check every 30 seconds
+                securityManager.checkInactivity()
+            }
+        }
+
         setContent {
             VaultCalcTheme {
                 Surface(
@@ -34,5 +51,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        securityManager.updateActivity()
     }
 }
