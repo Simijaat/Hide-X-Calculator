@@ -17,18 +17,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowserScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToDownloads: (String?) -> Unit,
     viewModel: BrowserViewModel = hiltViewModel()
 ) {
     val tabs by viewModel.tabs.collectAsState()
     val activeTabId by viewModel.activeTabId.collectAsState()
     val activeTab = tabs.find { it.id == activeTabId }
-
 
     var urlInput by remember(activeTab?.url) { mutableStateOf(activeTab?.url ?: "") }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
@@ -87,6 +88,9 @@ fun BrowserScreen(
                 IconButton(onClick = { viewModel.addNewTab() }) {
                     Icon(Icons.Default.Add, contentDescription = "New Tab")
                 }
+                IconButton(onClick = { onNavigateToDownloads(null) }) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Downloads")
+                }
                 var showMenu by remember { mutableStateOf(false) }
                 IconButton(onClick = { showMenu = true }) {
                     Icon(Icons.Default.MoreVert, contentDescription = "Menu")
@@ -120,9 +124,6 @@ fun BrowserScreen(
                     AndroidView(
                         modifier = Modifier.fillMaxSize(),
                         factory = { ctx ->
-                            // Fetch AdBlockManager safely inside compose via EntryPoint logic or manually inject
-                            // For simplicity in AndroidView, we can get it from the application context if we cast,
-                            // but actually we should just provide it via Hilt EntryPoint.
                             WebView(ctx).apply {
                                 webViewRef = this
                                 settings.apply {
@@ -157,6 +158,10 @@ fun BrowserScreen(
                                         viewModel.updateCurrentTabTitle(title)
                                     }
                                 )
+
+                                setDownloadListener { url, _, _, _, _ ->
+                                    onNavigateToDownloads(url)
+                                }
 
                                 loadUrl(tab.url)
                             }

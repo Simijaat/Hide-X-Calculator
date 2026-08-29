@@ -14,7 +14,8 @@ import androidx.compose.ui.unit.dp
 fun VaultScreen(
     onNavigateBack: () -> Unit,
     onNavigateToBrowser: () -> Unit,
-    onNavigateToVpn: () -> Unit
+    onNavigateToVpn: () -> Unit,
+    onNavigateToDownloads: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -59,11 +60,13 @@ fun VaultScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Download Manager features will be implemented here.",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+
+            Button(
+                onClick = onNavigateToDownloads,
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+            ) {
+                Text("Download Center", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }
