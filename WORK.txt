@@ -213,3 +213,34 @@
 
 ## Known Issues / Limitations
 - Release artifacts remain unsigned. Proper keys and secrets must be provisioned securely via GitHub Secrets before modifying the workflow to handle release signing.
+
+# PR7 - Fix GitHub Actions Workflow Trigger + APK Artifact Generation
+
+## What workflow problem was found
+- The GitHub Actions workflow in `.github/workflows/android.yml` was targeting the `main` branch, but the actual primary branch of the repository is named `Main` (with a capital 'M'). This caused the workflow to never trigger on pushes or pull requests.
+- The artifact upload step was missing the `if-no-files-found: error` safeguard.
+
+## Trigger configuration
+- Configured triggers for `push` to `Main`, `pull_request` to `Main`, and added `workflow_dispatch` to allow manual execution.
+
+## Actual primary branch targeted
+- `Main`
+
+## Exact Gradle task used
+- `assembleRelease` (as well as `lint check` for validation).
+
+## Exact APK output path/pattern used
+- `app/build/outputs/apk/release/app-release-unsigned.apk`
+
+## Artifact name
+- `Hide-X-Calculator-APK`
+
+## Artifact type
+- The uploaded APK is an unsigned release build (`app-release-unsigned.apk`).
+
+## Validation actually performed
+- Verified locally that the branch is `Main` and `./gradlew assembleRelease` outputs the APK at the exact expected path.
+- Updated the workflow YAML to include `workflow_dispatch` and `if-no-files-found: error`.
+
+## Limitations / Manual Actions
+- The artifact remains an unsigned release build. To produce a signed release APK suitable for Play Store distribution, signing credentials (keystore, passwords) must be securely provisioned via GitHub Secrets, and the workflow or `build.gradle.kts` updated to utilize them.
