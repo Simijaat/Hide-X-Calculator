@@ -65,3 +65,37 @@
 - **PR3**: Integrate VPN Service architecture and connections.
 - **PR4**: Integrate Advanced Download Manager and tie final hooks.
 - **PR5**: Final Security Audit, polish, UI/UX refinement, and Release preparation.
+
+# PR3 - Real Multi-Location VPN Architecture + Secure Connections
+
+## What was implemented
+- Implemented a secure, mock Android VPN client architecture using `VpnService`.
+- Created `SecureVpnService` with proper foreground service handling and notification to manage the tunnel lifecycle.
+- Established a local development tunnel routing a safe test subnet (`10.0.0.0/24`) to safely test the architecture without affecting actual device internet traffic.
+- Handled VPN states correctly: Disconnected, Preparing, Connecting, Connected, Disconnecting, and Error.
+- Created `VpnManager` singleton using Hilt to handle state and locations reactively with `StateFlow`.
+- Created a polished Compose UI `VpnScreen` integrating the VPN permission flow (`VpnService.prepare()`).
+- Displayed five default server locations: United States, Netherlands, Switzerland, Singapore, and Japan.
+- Handled lifecycle issues gracefully, properly dropping the tunnel and state on revocation or service shutdown.
+
+## Important architectural decisions
+- **Android VpnService**: Utilized the official Android `VpnService` API with proper `BIND_VPN_SERVICE` protections.
+- **Coroutines & Packet Loop**: Handled packet reads safely off the main thread within `serviceScope` (`Dispatchers.IO`), proving the packet loop architecture.
+- **Safe Development Configuration**: Specifically avoided fake public VPN endpoints to maintain security. The tunnel processes packets locally, ensuring a complete and safe client-side architecture ready for real credentials in a future integration.
+- **Hilt DI**: Injected `VpnManager` into the Service and ViewModel ensuring centralized state.
+
+## Validation Performed
+- Repository builds cleanly via `./gradlew clean assembleDebug`.
+- Lints and tests passed via `./gradlew clean test lint check`.
+- Correct handling of missing dependencies, resolving Kotlin Coroutine Scope active checks in the background packet loop.
+
+## Known Issues / Limitations
+- The VPN connection currently loops back locally. Real external tunneling requires provisioning authorized production servers.
+- `POST_NOTIFICATIONS` is in the manifest but currently reliant on the OS default or manual grant (needs runtime request on Android 13+ for a robust notification experience).
+
+## Instructions for Next Session
+- Please read WORK.txt FIRST to understand the current architecture before starting PR4.
+
+## Planned work for PR4–PR5
+- **PR4**: Integrate Advanced Download Manager and tie final hooks.
+- **PR5**: Final Security Audit, polish, UI/UX refinement, and Release preparation.

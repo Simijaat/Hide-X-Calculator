@@ -13,7 +13,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun VaultScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToBrowser: () -> Unit
+    onNavigateToBrowser: () -> Unit,
+    onNavigateToVpn: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -49,8 +50,17 @@ fun VaultScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onNavigateToVpn,
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+            ) {
+                Text("Secure VPN", style = MaterialTheme.typography.titleMedium)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "VPN, and Download Manager features will be implemented here.",
+                text = "Download Manager features will be implemented here.",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
