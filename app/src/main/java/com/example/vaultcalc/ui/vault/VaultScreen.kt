@@ -12,7 +12,8 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VaultScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToBrowser: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -38,9 +39,18 @@ fun VaultScreen(
                 text = "Welcome to your secure vault.",
                 style = MaterialTheme.typography.headlineMedium
             )
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(
+                onClick = onNavigateToBrowser,
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+            ) {
+                Text("Private Browser", style = MaterialTheme.typography.titleMedium)
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Browser, VPN, Ad Blocker, and Download Manager features will be implemented here.",
+                text = "VPN, and Download Manager features will be implemented here.",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )

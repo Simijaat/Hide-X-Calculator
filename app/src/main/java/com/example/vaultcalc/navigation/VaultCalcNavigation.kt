@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.vaultcalc.data.security.VaultSecurityManager
 import com.example.vaultcalc.ui.calculator.CalculatorScreen
 import com.example.vaultcalc.ui.vault.VaultScreen
+import com.example.vaultcalc.ui.browser.BrowserScreen
 
 @Composable
 fun VaultCalcNavigation(securityManager: VaultSecurityManager) {
@@ -32,6 +33,16 @@ fun VaultCalcNavigation(securityManager: VaultSecurityManager) {
             VaultScreen(
                 onNavigateBack = {
                     securityManager.lockVault()
+                },
+                onNavigateToBrowser = {
+                    navController.navigate("browser")
+                }
+            )
+        }
+        composable("browser") {
+            BrowserScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }
