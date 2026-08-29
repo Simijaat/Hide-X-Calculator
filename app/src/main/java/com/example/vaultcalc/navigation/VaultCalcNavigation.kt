@@ -11,6 +11,7 @@ import com.example.vaultcalc.data.security.VaultSecurityManager
 import com.example.vaultcalc.ui.calculator.CalculatorScreen
 import com.example.vaultcalc.ui.vault.VaultScreen
 import com.example.vaultcalc.ui.browser.BrowserScreen
+import com.example.vaultcalc.ui.vpn.VpnScreen
 
 @Composable
 fun VaultCalcNavigation(securityManager: VaultSecurityManager) {
@@ -36,11 +37,21 @@ fun VaultCalcNavigation(securityManager: VaultSecurityManager) {
                 },
                 onNavigateToBrowser = {
                     navController.navigate("browser")
+                },
+                onNavigateToVpn = {
+                    navController.navigate("vpn")
                 }
             )
         }
         composable("browser") {
             BrowserScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable("vpn") {
+            VpnScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
