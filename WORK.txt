@@ -267,3 +267,14 @@
 
 ## Known Issues / Limitations
 - Release artifacts are still not handled since they require secrets, but the debug workflow provides a completely installable binary for testing.
+
+# PR8 - Fix AndroidManifest Intent Filters
+
+## What was implemented
+- Fixed the launcher category issue in `app/src/main/AndroidManifest.xml` by changing `android.intent.action.LAUNCHER` to the correct Android category `android.intent.category.LAUNCHER`.
+- Separated the `MAIN`/`LAUNCHER` intent filter block from the `SEND` intent filter block inside `MainActivity` to adhere to Android best practices, preventing potential intent resolution conflicts while maintaining functional app launching and external intent handling.
+
+## Validation Performed
+- Edited `AndroidManifest.xml` using a Python string-replacement script.
+- Verified file changes using `grep` confirming the separation and correction.
+- Ran `./gradlew clean test lint check assembleDebug` to successfully rebuild and validate the app and the debug APK without error.
