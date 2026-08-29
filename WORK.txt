@@ -20,11 +20,48 @@
 - Calculator logic uses a simple recursive descent parser which relies on Doubles and may encounter floating point inaccuracies for some advanced calculations.
 - While `FLAG_SECURE` prevents screenshots, advanced rooting could still potentially inspect memory.
 
-## Instructions for Next Session
-- Please read WORK.txt FIRST to understand the current architecture before starting PR2.
+---
 
-## Planned work for PR2–PR5
-- **PR2**: Integrate the Secure Browser and Download Manager within the Vault context.
+# PR2 - Advanced Private Browser + Ad/Tracker Blocking
+
+## What was implemented
+- Added **INTERNET** permissions to `AndroidManifest.xml`.
+- Integrated **Room Database** (v2.6.1) to support Browser Data persistence (Bookmarks and History).
+- Implemented **Data Layer**:
+  - `Bookmark` and `HistoryItem` entities.
+  - `BrowserDao` and `BrowserDatabase` configured to handle DB operations.
+  - `BrowserRepository` created and injected via Hilt `AppModule`.
+- Implemented **Ad & Tracker Blocking**:
+  - Integrated `AdBlockManager` which loads a robust `ad_hosts.txt` (via StevenBlack's hosts file base) from assets into memory for O(1) subset lookup domain blocking.
+- Implemented **Secure Browser Architecture**:
+  - `BrowserViewModel` manages multi-tab states (`BrowserTab`), ad-block toggling, bookmarks, and history flow.
+  - `SecureWebViewClient` intercepts network requests, checks them against `AdBlockManager`, blocks non-HTTP/HTTPS schemas, and guarantees navigation integrity.
+  - `SecureWebChromeClient` tracks loading progress and securely handles title updates.
+- Built **Browser UI**:
+  - `BrowserScreen` features a clean address bar, back/forward navigation controls, stop/reload context, new tab triggers, and an ad-block toggle dropdown.
+  - Configured WebView inside `AndroidView` securely: disables file access, DOM storage sandboxing in memory, mixed-content rejections.
+- Integrated **Navigation**:
+  - Expanded `VaultCalcNavigation` to link from `VaultScreen` directly to the new `BrowserScreen`.
+
+## Important architectural decisions
+- **WebView Security**: File access (`allowFileAccess`, `allowContentAccess`) is disabled, Database is disabled, Mixed Content is strictly blocked, Javascript is enabled but heavily monitored via Intercepts.
+- **Host Blocking Efficiency**: Ad domains are aggressively loaded into a `HashSet` allowing very rapid hostname part-matching for every WebView network intercept, keeping the UI thread lag-free.
+- **Room for Bookmarks**: Standard local-only relational store ensures data does not leak into external logs.
+
+## Validation Performed
+- Repository builds cleanly via `./gradlew clean assembleDebug`.
+- Lints and tests passed via `./gradlew clean test lint check`.
+- Verified domain interception logic using custom `SecureWebViewClient`.
+
+## Known Issues / Limitations
+- Tabs state is entirely memory-based during the session. Process death clears tabs (intentional for incognito privacy, but could be extended to persist if desired).
+- Progress indicator loading transitions can be abrupt depending on the webpage's resource waterfall.
+- No VPN integration or Advanced Downloads implemented (held for PR3 and PR4).
+
+## Instructions for Next Session
+- Please read WORK.txt FIRST to understand the current architecture before starting PR3.
+
+## Planned work for PR3–PR5
 - **PR3**: Integrate VPN Service architecture and connections.
-- **PR4**: Integrate Ad/Tracker Blocking engine and tie everything together.
-- **PR5**: Final Security Audit, polish, and Release preparation.
+- **PR4**: Integrate Advanced Download Manager and tie final hooks.
+- **PR5**: Final Security Audit, polish, UI/UX refinement, and Release preparation.
