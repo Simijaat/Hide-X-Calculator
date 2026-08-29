@@ -189,3 +189,27 @@
 
 - Release artifacts are currently unsigned, meaning they cannot be deployed directly to the Play Store. Proper keys and secrets must be provisioned securely via GitHub Secrets before modifying the workflow to handle release signing.
 - VPN remains a local-tunnel loopback device, lacking actual configuration to a remote location.
+
+# PR6 - Fix GitHub Actions APK Build & Artifact
+
+## What was implemented
+- Fixed `.github/workflows/android.yml` to correctly produce and upload a downloadable APK artifact.
+- Removed the broad `./gradlew build` task in favor of explicit `./gradlew lint check` and `./gradlew assembleRelease` tasks.
+- Added a diagnostic step to list the output directory and verify the APK's existence before uploading.
+- Changed the uploaded artifact name to a clear `VaultCalc-APK`.
+- The exact Gradle task used for building the release APK is `assembleRelease`.
+- The expected APK output path is `app/build/outputs/apk/release/app-release-unsigned.apk`.
+
+## Workflow trigger behavior
+- The workflow continues to trigger on `push` and `pull_request` events to the `main` branch.
+
+## Important architectural decisions
+- Kept the workflow strictly focused on code compilation and APK artifact generation.
+- Due to the absence of keystore/secrets in the repository, the artifact produced is an unsigned release APK.
+
+## Validation Performed
+- Locally verified that the exact path `app/build/outputs/apk/release/app-release-unsigned.apk` is produced by `./gradlew assembleRelease`.
+- Repository builds cleanly via `./gradlew clean test lint check`.
+
+## Known Issues / Limitations
+- Release artifacts remain unsigned. Proper keys and secrets must be provisioned securely via GitHub Secrets before modifying the workflow to handle release signing.
