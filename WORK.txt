@@ -143,3 +143,49 @@
 
 ## Planned work for PR5
 - **PR5**: Final Security Audit, polish, UI/UX refinement, and Release preparation.
+
+# PR5 - Final Production Hardening, Bug Fixes, Polish + Release Build Setup
+
+## What was implemented
+
+- **Dependency Updates & Build/Gradle Fixes**:
+  - Addressed Gradle deprecations by changing `sourceCompatibility` and `targetCompatibility` to `JavaVersion.VERSION_1_8` with warnings suppressed, and bumping hilt-navigation-compose to 1.1.0 to clear an older deprecation.
+  - Supplied an explicit application icon in `AndroidManifest.xml` (`@drawable/ic_launcher`) to fulfill the linting requirement and created the missing asset.
+  - Eliminated unused legacy assets and folder versions like `mipmap-anydpi-v26` and `values/colors.xml` which triggered lint issues.
+
+- **Security / Notification Permissions & Manifest Updates**:
+  - Foreground service types strictly declared for Android 14+ (`specialUse` for VPN, `dataSync` for downloads), keeping within security requirements.
+  - Improved `POST_NOTIFICATIONS` runtime flow on Android 13+ inside the VPN UI, handling permissions gracefully rather than relying on silent system failures.
+
+- **Browser Polish & Security Improvements**:
+  - Hardened the `SecureWebViewClient` logic to explicitly intercept and block anything besides `http://` and `https://` schemas, eliminating edge-case URL hijacking or deep-link leaks out of the secure browser session.
+
+- **VPN Service Polish**:
+  - Removed unused variable `outputStream` to clear compiler warnings.
+  - Ensured correct connection lifecycle when handling notification requests.
+
+- **Download Manager Enhancements**:
+  - Handled `NumberFormatException` cleanly in the `SecureDownloadService` content length parsing.
+  - Validated safe `.part` file cleanup during unexpected halts or cancellations.
+
+- **Calculator UI/UX Polish**:
+  - Corrected floating-point inaccuracy calculations by implementing standard decimal rounding on eval outputs to ensure smooth calculations without weird precision glitches (e.g. 10.0000000004).
+
+- **Release Build Setup**:
+  - Created a robust GitHub Actions workflow in `.github/workflows/android.yml` ensuring the repository checks out, sets up JDK 17, and produces a successful, unsigned APK release artifact upon any pushes or pull requests to the main branch.
+
+## Important architectural decisions
+
+- **Focus on Polish over Redesign**: Emphasized code correctness and resolving genuine compiler and functional warnings rather than refactoring working systems pointlessly.
+- **Continuous Integration Stability**: Validated the project through rigorous local Gradle checks before solidifying the automated Action workflow, confirming the Android builds are healthy.
+
+## Validation Performed
+
+- Repository builds cleanly via `./gradlew clean assembleDebug`.
+- Lints and tests passed via `./gradlew clean test lint check`.
+- Verified `lint-results-debug.txt` returns `No issues found.`
+
+## Known Issues / Limitations
+
+- Release artifacts are currently unsigned, meaning they cannot be deployed directly to the Play Store. Proper keys and secrets must be provisioned securely via GitHub Secrets before modifying the workflow to handle release signing.
+- VPN remains a local-tunnel loopback device, lacking actual configuration to a remote location.
