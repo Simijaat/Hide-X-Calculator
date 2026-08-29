@@ -99,3 +99,47 @@
 ## Planned work for PR4–PR5
 - **PR4**: Integrate Advanced Download Manager and tie final hooks.
 - **PR5**: Final Security Audit, polish, UI/UX refinement, and Release preparation.
+
+# PR4 - Advanced Link Resolver + Media/File Download Engine
+
+## What was implemented
+- **Data Layer**: Created `DownloadTask`, `DownloadState`, `DownloadDao`, and `DownloadDatabase` via Room to persist download queues and history. Bound securely via Hilt.
+- **Link Resolver Architecture**:
+  - Implemented modular `ResolverStrategy` interface.
+  - Implemented `DirectLinkStrategy` using lightweight HEAD requests to detect exact file matches and raw downloads.
+  - Implemented `HtmlMetadataStrategy` to scrape legitimate, standard OpenGraph (`og:video`) and Twitter Card URLs gracefully from supported sites.
+  - Coordinated through `LinkResolverManager`.
+- **Download Engine**:
+  - Created `SecureDownloadService` mapped as a `dataSync` Foreground Service to ensure reliability across app states.
+  - Handled persistent, chunked file downloading securely to internal sandbox (`context.filesDir/vault_downloads`).
+  - Supported Range headers for pausing/resuming.
+  - Validated download integrity by mapping content-length accurately.
+  - Managed concurrent tasks via Coroutines (`Dispatchers.IO`).
+- **File Export**:
+  - Created `DownloadStorageManager` using `MediaStore` to securely export completed downloads out of the Vault sandbox into the public Android `Downloads/VaultExport` directory on explicit user request.
+- **UI/Browser Integration**:
+  - Created `DownloadCenterScreen` for queue management (pause, resume, delete, export).
+  - Created `ResolverDialog` to let the user select between multiple resolved media options.
+  - Bound `BrowserScreen` WebView to intercept `setDownloadListener`, instantly piping native download requests directly into the `DownloadCenterScreen`.
+  - Added system intent sharing (`ACTION_SEND`) to `MainActivity` to allow users to directly share links from external apps to the Vault's Resolver pipeline.
+
+## Important architectural decisions
+- **Service Type**: Used `dataSync` foreground service to allow the download engine to run reliably without being killed immediately by Android's battery optimizer.
+- **Resolver Pipeline**: Separated resolution from downloading. A link must be successfully converted to a `DownloadOption` before a task is enqueued. This avoids fake states.
+- **Temporary Files**: Downloads write to `.part` files in internal storage until successful completion to prevent partial, broken files from being consumed by the user or the app.
+- **No DRM circumvention**: The resolver relies strictly on standard HTTP headers, standard HTML tags, and accessible URIs, making no attempt to defeat protections.
+
+## Validation Performed
+- Repository builds cleanly via `./gradlew clean assembleDebug`.
+- Lints and tests passed via `./gradlew clean test lint check`.
+- Verified StateFlow logic inside navigation graph to dynamically pick up shared URLs.
+
+## Known Issues / Limitations
+- HLS/M3U8 streaming manifests are not supported by this basic byte-chunk downloader.
+- Websites requiring Javascript-rendered DOM evaluation will fail the basic `HtmlMetadataStrategy`.
+
+## Instructions for Next Session
+- Please read WORK.txt FIRST to understand the current architecture before starting PR5.
+
+## Planned work for PR5
+- **PR5**: Final Security Audit, polish, UI/UX refinement, and Release preparation.

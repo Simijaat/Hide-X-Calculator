@@ -12,11 +12,23 @@ import com.example.vaultcalc.ui.calculator.CalculatorScreen
 import com.example.vaultcalc.ui.vault.VaultScreen
 import com.example.vaultcalc.ui.browser.BrowserScreen
 import com.example.vaultcalc.ui.vpn.VpnScreen
+import com.example.vaultcalc.ui.download.DownloadCenterScreen
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import com.example.vaultcalc.MainActivity
 
 @Composable
-fun VaultCalcNavigation(securityManager: VaultSecurityManager) {
+fun VaultCalcNavigation(
+    securityManager: VaultSecurityManager,
+    sharedUrl: StateFlow<String?>? = null
+) {
     val navController = rememberNavController()
     val isVaultUnlocked by securityManager.isVaultUnlocked.collectAsState()
+
+    // We need to manage browser-to-download routing URL passing
+    val _browserDownloadUrl = MutableStateFlow<String?>(null)
+    val browserDownloadUrl = _browserDownloadUrl.asStateFlow()
 
     LaunchedEffect(isVaultUnlocked) {
         if (!isVaultUnlocked) {
@@ -40,6 +52,9 @@ fun VaultCalcNavigation(securityManager: VaultSecurityManager) {
                 },
                 onNavigateToVpn = {
                     navController.navigate("vpn")
+                },
+                onNavigateToDownloads = {
+                    navController.navigate("downloads")
                 }
             )
         }
@@ -47,6 +62,10 @@ fun VaultCalcNavigation(securityManager: VaultSecurityManager) {
             BrowserScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToDownloads = { url ->
+                    _browserDownloadUrl.value = url
+                    navController.navigate("downloads")
                 }
             )
         }
@@ -54,6 +73,30 @@ fun VaultCalcNavigation(securityManager: VaultSecurityManager) {
             VpnScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+        composable("downloads") {
+            // Determine which URL flow to pass (External intent vs Internal browser)
+            val currentBrowserUrl by browserDownloadUrl.collectAsState()
+            val activeFlow = if (currentBrowserUrl != null) {
+                browserDownloadUrl
+            } else {
+                sharedUrl
+            }
+
+            DownloadCenterScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                sharedUrlFlow = activeFlow,
+                onSharedUrlHandled = {
+                    // Clear whichever was active
+                    if (browserDownloadUrl.value != null) {
+                        _browserDownloadUrl.value = null
+                    } else if (navController.context is MainActivity) {
+                        (navController.context as MainActivity).clearSharedUrl()
+                    }
                 }
             )
         }

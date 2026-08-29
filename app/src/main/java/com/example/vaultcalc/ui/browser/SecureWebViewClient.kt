@@ -1,7 +1,6 @@
 package com.example.vaultcalc.ui.browser
 
 import android.graphics.Bitmap
-import android.net.Uri
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView

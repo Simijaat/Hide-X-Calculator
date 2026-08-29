@@ -6,6 +6,9 @@ import com.example.vaultcalc.data.browser.AdBlockManager
 import com.example.vaultcalc.data.browser.BrowserDao
 import com.example.vaultcalc.data.browser.BrowserDatabase
 import com.example.vaultcalc.data.browser.BrowserRepository
+import com.example.vaultcalc.data.download.DownloadDao
+import com.example.vaultcalc.data.download.DownloadDatabase
+import com.example.vaultcalc.data.download.DownloadRepository
 import com.example.vaultcalc.data.security.VaultSecurityManager
 import dagger.Module
 import dagger.Provides
@@ -52,5 +55,27 @@ object AppModule {
     @Singleton
     fun provideAdBlockManager(@ApplicationContext context: Context): AdBlockManager {
         return AdBlockManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDownloadDatabase(@ApplicationContext context: Context): DownloadDatabase {
+        return Room.databaseBuilder(
+            context,
+            DownloadDatabase::class.java,
+            "download_db"
+        ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDownloadDao(database: DownloadDatabase): DownloadDao {
+        return database.downloadDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDownloadRepository(downloadDao: DownloadDao): DownloadRepository {
+        return DownloadRepository(downloadDao)
     }
 }
