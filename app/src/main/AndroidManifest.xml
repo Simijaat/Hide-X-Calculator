@@ -16,6 +16,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.VaultCalc"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
