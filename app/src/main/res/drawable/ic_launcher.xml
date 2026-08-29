@@ -3,7 +3,44 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-  <path
-      android:pathData="M54,54m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0"
-      android:fillColor="#000000"/>
+
+    <!-- Background -->
+    <path
+        android:pathData="M14,14 h80 v80 h-80 z"
+        android:fillColor="#F0F0F0" />
+
+    <!-- Calculator Body -->
+    <path
+        android:pathData="M24,24 h60 v60 h-60 z"
+        android:fillColor="#E0E0E0"
+        android:strokeColor="#BDBDBD"
+        android:strokeWidth="2" />
+
+    <!-- Display -->
+    <path
+        android:pathData="M30,30 h48 v16 h-48 z"
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#9E9E9E"
+        android:strokeWidth="1" />
+
+    <!-- Buttons -->
+    <path
+        android:pathData="M30,52 h12 v10 h-12 z"
+        android:fillColor="#BDBDBD" />
+    <path
+        android:pathData="M48,52 h12 v10 h-12 z"
+        android:fillColor="#BDBDBD" />
+    <path
+        android:pathData="M66,52 h12 v10 h-12 z"
+        android:fillColor="#FF9800" />
+
+    <path
+        android:pathData="M30,68 h12 v10 h-12 z"
+        android:fillColor="#BDBDBD" />
+    <path
+        android:pathData="M48,68 h12 v10 h-12 z"
+        android:fillColor="#BDBDBD" />
+    <path
+        android:pathData="M66,68 h12 v10 h-12 z"
+        android:fillColor="#FF9800" />
 </vector>

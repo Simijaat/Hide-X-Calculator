@@ -244,3 +244,26 @@
 
 ## Limitations / Manual Actions
 - The artifact remains an unsigned release build. To produce a signed release APK suitable for Play Store distribution, signing credentials (keystore, passwords) must be securely provisioned via GitHub Secrets, and the workflow or `build.gradle.kts` updated to utilize them.
+
+# PR7 (Updated) - Fix GitHub Actions Artifact, App Name, and Launcher Icon
+
+## What was implemented
+- **App Renaming**: Changed `app_name` in `strings.xml` from "VaultCalc" to "Calculator" to reflect the intended cloaked identity.
+- **Launcher Icon**:
+  - Defined `android:icon="@mipmap/ic_launcher"` and `android:roundIcon="@mipmap/ic_launcher_round"` in `AndroidManifest.xml` application tag.
+  - Replaced the generic `ic_launcher.xml` vector drawable with a new, clean calculator-style adaptive launcher icon.
+- **GitHub Actions Workflow**:
+  - Changed the build task in `.github/workflows/android.yml` from `assembleRelease` to `assembleDebug`.
+  - Updated the artifact upload path to `app/build/outputs/apk/debug/app-debug.apk`.
+  - Changed the uploaded artifact name to `Calculator-debug.apk`.
+  - This ensures CI produces a signed (with debug key), installable APK artifact for immediate testing.
+
+## Artifact type
+- The uploaded APK is now a signed debug build (`app-debug.apk`), ensuring it is installable without manual signing steps.
+
+## Validation Performed
+- Ran `./gradlew assembleDebug` locally and verified the APK outputs exactly at `app/build/outputs/apk/debug/app-debug.apk`.
+- Ran `./gradlew clean test lint check` to ensure the project continues to build and validate successfully.
+
+## Known Issues / Limitations
+- Release artifacts are still not handled since they require secrets, but the debug workflow provides a completely installable binary for testing.
