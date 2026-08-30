@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,7 +46,9 @@ fun VaultScreen(
     onNavigateToDownloads: () -> Unit,
     onNavigateToNotes: () -> Unit,
     onNavigateToPhotos: () -> Unit,
-    onNavigateToVideos: () -> Unit
+    onNavigateToVideos: () -> Unit,
+    onNavigateToDocuments: () -> Unit,
+    onNavigateToAudio: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -70,7 +74,9 @@ fun VaultScreen(
             VaultApp("Downloads", Icons.Default.KeyboardArrowDown, Color(0xFF8E24AA), onNavigateToDownloads),
             VaultApp("Notes", Icons.Default.Edit, Color(0xFFFBC02D), onNavigateToNotes),
             VaultApp("Photos", Icons.Default.AccountBox, Color(0xFFE53935), onNavigateToPhotos),
-            VaultApp("Videos", Icons.Default.PlayArrow, Color(0xFF3949AB), onNavigateToVideos)
+            VaultApp("Videos", Icons.Default.PlayArrow, Color(0xFF3949AB), onNavigateToVideos),
+            VaultApp("Documents", Icons.Default.List, Color(0xFF00ACC1), onNavigateToDocuments),
+            VaultApp("Audio", Icons.Default.Notifications, Color(0xFFFF7043), onNavigateToAudio)
         )
 
         LazyVerticalGrid(
