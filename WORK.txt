@@ -278,3 +278,29 @@
 - Edited `AndroidManifest.xml` using a Python string-replacement script.
 - Verified file changes using `grep` confirming the separation and correction.
 - Ran `./gradlew clean test lint check assembleDebug` to successfully rebuild and validate the app and the debug APK without error.
+
+# PR9 - Calculator and Vault UI/UX Revamp
+
+## What was implemented
+- **Calculator Logic (`CalculatorViewModel.kt` & `CalculatorState`)**:
+  - Exposes `isPinSet` and `isConfirmingPin` to display guided onboarding text when the user opens the app for the first time.
+  - Mapped standard iOS math symbols (÷, ×, −, +) to internal operators (`/`, `*`, `-`, `+`) for evaluation calculation.
+  - Implemented the "AC", "C", "+/-", and "%" buttons.
+- **Calculator UI (`CalculatorScreen.kt`)**:
+  - Revamped layout entirely mimicking an iOS aesthetic:
+    - Top row (AC, +/-, %) uses a light gray background with black text.
+    - Rightmost operation column uses the primary orange background with white text.
+    - Number pad uses a dark gray background.
+  - Applied circle and rounded rect shapes, updating font sizing and spacing for a premium feel.
+  - Implemented hint texts reflecting the state (setting vs confirming the PIN).
+- **Vault UI (`VaultScreen.kt`)**:
+  - Re-designed the Vault into a premium phone-like grid utilizing `LazyVerticalGrid`.
+  - Added discrete, colorful container boxes with matching Material Icons for the apps: Browser, VPN, Downloads, Notes, Photos, and Videos.
+  - Switched the general layout background to deep black for a clean glassmorphism appearance.
+- **Navigation Update (`VaultCalcNavigation.kt`)**:
+  - Bound the new grid buttons (Notes, Photos, Videos) to explicit routes within the `NavHost`.
+  - Added simple, clean `PlaceholderScreen` composites to handle the upcoming feature destinations.
+
+## Validation Performed
+- Ran `./gradlew check` to verify standard lint and syntax checks pass. Fixed unreferenced import warnings.
+- Ran `./gradlew assembleDebug` to confirm full APK compilation succeeding.

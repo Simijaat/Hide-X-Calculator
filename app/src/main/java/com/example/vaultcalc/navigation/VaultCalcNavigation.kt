@@ -13,6 +13,7 @@ import com.example.vaultcalc.ui.vault.VaultScreen
 import com.example.vaultcalc.ui.browser.BrowserScreen
 import com.example.vaultcalc.ui.vpn.VpnScreen
 import com.example.vaultcalc.ui.download.DownloadCenterScreen
+import com.example.vaultcalc.ui.PlaceholderScreen
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,6 +56,15 @@ fun VaultCalcNavigation(
                 },
                 onNavigateToDownloads = {
                     navController.navigate("downloads")
+                },
+                onNavigateToNotes = {
+                    navController.navigate("notes")
+                },
+                onNavigateToPhotos = {
+                    navController.navigate("photos")
+                },
+                onNavigateToVideos = {
+                    navController.navigate("videos")
                 }
             )
         }
@@ -99,6 +109,15 @@ fun VaultCalcNavigation(
                     }
                 }
             )
+        }
+        composable("notes") {
+            PlaceholderScreen("Notes", onNavigateBack = { navController.popBackStack() })
+        }
+        composable("photos") {
+            PlaceholderScreen("Photos", onNavigateBack = { navController.popBackStack() })
+        }
+        composable("videos") {
+            PlaceholderScreen("Videos", onNavigateBack = { navController.popBackStack() })
         }
     }
 }

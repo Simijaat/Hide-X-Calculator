@@ -15,12 +15,20 @@ class CalculatorViewModel @Inject constructor(
     private val securityManager: VaultSecurityManager
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(CalculatorState())
+    private val _state = MutableStateFlow(CalculatorState(isPinSet = securityManager.isPinSet()))
     val state: StateFlow<CalculatorState> = _state.asStateFlow()
 
     private var currentInput = ""
     private var isResult = false
     private var setupPin: String? = null
+
+    init {
+        // Initialize state
+        _state.value = _state.value.copy(
+            isPinSet = securityManager.isPinSet(),
+            isConfirmingPin = false
+        )
+    }
 
     fun onAction(action: CalculatorAction) {
         when (action) {
@@ -32,11 +40,11 @@ class CalculatorViewModel @Inject constructor(
 
     private fun handleInput(symbol: String) {
         when (symbol) {
-            "C" -> {
+            "AC", "C" -> {
                 currentInput = ""
                 isResult = false
                 setupPin = null
-                _state.value = _state.value.copy(displayValue = "0")
+                _state.value = _state.value.copy(displayValue = "0", isConfirmingPin = false)
             }
             "DEL" -> {
                 if (isResult) {
@@ -47,22 +55,44 @@ class CalculatorViewModel @Inject constructor(
                 }
                 _state.value = _state.value.copy(displayValue = if (currentInput.isEmpty()) "0" else currentInput)
             }
+            "+/-" -> {
+                if (currentInput.isNotEmpty() && currentInput != "0") {
+                    currentInput = if (currentInput.startsWith("-")) {
+                        currentInput.substring(1)
+                    } else {
+                        "-$currentInput"
+                    }
+                    _state.value = _state.value.copy(displayValue = currentInput)
+                }
+            }
+            "%" -> {
+                 if (currentInput.isNotEmpty() && currentInput != "0" && currentInput.toDoubleOrNull() != null) {
+                     val num = currentInput.toDouble()
+                     currentInput = (num / 100).toString()
+                     isResult = true
+                     _state.value = _state.value.copy(displayValue = currentInput)
+                 }
+            }
             "=" -> {
                 if (!securityManager.isPinSet() && currentInput.length >= 4 && currentInput.all { it.isDigit() }) {
                     if (setupPin == null) {
                         setupPin = currentInput
                         currentInput = ""
-                        _state.value = _state.value.copy(displayValue = "0")
+                        _state.value = _state.value.copy(displayValue = "0", isConfirmingPin = true)
                     } else if (setupPin == currentInput) {
                         securityManager.setPin(currentInput)
-                        _state.value = _state.value.copy(navigateToVault = true)
+                        _state.value = _state.value.copy(
+                            navigateToVault = true,
+                            isPinSet = true,
+                            isConfirmingPin = false
+                        )
                         currentInput = ""
                         setupPin = null
                     } else {
                         // mismatch, start over
                         setupPin = null
                         currentInput = ""
-                        _state.value = _state.value.copy(displayValue = "0")
+                        _state.value = _state.value.copy(displayValue = "0", isConfirmingPin = false)
                     }
                 } else {
                     checkVaultAccess()
@@ -72,21 +102,36 @@ class CalculatorViewModel @Inject constructor(
                 }
             }
             else -> {
+                // Map symbols back to operators for calculation
+                val internalSymbol = when (symbol) {
+                    "÷" -> "/"
+                    "×" -> "*"
+                    "−" -> "-"
+                    else -> symbol
+                }
+
                 if (isResult) {
-                    if (symbol.all { it.isDigit() } || symbol == ".") {
-                        currentInput = symbol
+                    if (internalSymbol.all { it.isDigit() } || internalSymbol == ".") {
+                        currentInput = internalSymbol
                     } else {
-                        currentInput += symbol
+                        currentInput += internalSymbol
                     }
                     isResult = false
                 } else {
-                    if (_state.value.displayValue == "0" && symbol != ".") {
-                        currentInput = symbol
+                    if (_state.value.displayValue == "0" && internalSymbol != ".") {
+                        currentInput = internalSymbol
                     } else {
-                        currentInput += symbol
+                        currentInput += internalSymbol
                     }
                 }
-                _state.value = _state.value.copy(displayValue = currentInput)
+
+                // Display user-friendly string (convert internally stored symbols to display symbols if they are at the end)
+                val displayStr = currentInput
+                    .replace("/", "÷")
+                    .replace("*", "×")
+                    .replace("-", "−")
+
+                _state.value = _state.value.copy(displayValue = displayStr)
             }
         }
     }
@@ -105,7 +150,7 @@ class CalculatorViewModel @Inject constructor(
             }
             currentInput = formattedResult
             isResult = true
-            _state.value = _state.value.copy(displayValue = formattedResult)
+            _state.value = _state.value.copy(displayValue = formattedResult.replace("-", "−"))
         } catch (e: Exception) {
             _state.value = _state.value.copy(displayValue = "Error")
             currentInput = ""
@@ -195,7 +240,9 @@ class CalculatorViewModel @Inject constructor(
 
 data class CalculatorState(
     val displayValue: String = "0",
-    val navigateToVault: Boolean = false
+    val navigateToVault: Boolean = false,
+    val isPinSet: Boolean = false,
+    val isConfirmingPin: Boolean = false
 )
 
 sealed class CalculatorAction {
