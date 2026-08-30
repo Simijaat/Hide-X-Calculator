@@ -18,3 +18,5 @@ val TopRowGray = Color(0xFFA5A5A5)
 val NumPadGray = Color(0xFF333333)
 val WhiteText = Color(0xFFFFFFFF)
 val BlackText = Color(0xFF000000)
+
+val AddressBarGray = Color(0xFF2D2D30)

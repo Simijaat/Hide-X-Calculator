@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -105,8 +106,8 @@ fun VaultAppIcon(app: VaultApp) {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(64.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(app.color)
+                .clip(RoundedCornerShape(22.dp))
+                .background(brush = Brush.verticalGradient(colors = listOf(app.color.copy(alpha = 0.6f), app.color)))
         ) {
             Icon(
                 imageVector = app.icon,

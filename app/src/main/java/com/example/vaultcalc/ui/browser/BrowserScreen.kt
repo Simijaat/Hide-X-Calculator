@@ -4,12 +4,19 @@ import android.annotation.SuppressLint
 import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import com.example.vaultcalc.ui.theme.AddressBarGray
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
@@ -34,18 +41,47 @@ fun BrowserScreen(
     var urlInput by remember(activeTab?.url) { mutableStateOf(activeTab?.url ?: "") }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
+    var showMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    OutlinedTextField(
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = {
+                    val homeUrl = "https://duckduckgo.com"
+                    urlInput = homeUrl
+                    viewModel.updateCurrentTabUrl(homeUrl)
+                    webViewRef?.loadUrl(homeUrl)
+                }) {
+                    Icon(Icons.Default.Home, contentDescription = "Home")
+                }
+
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .background(AddressBarGray, RoundedCornerShape(50))
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search Icon",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    BasicTextField(
                         value = urlInput,
                         onValueChange = { urlInput = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .padding(end = 8.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSurface),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                         keyboardActions = KeyboardActions(
                             onGo = {
@@ -56,57 +92,66 @@ fun BrowserScreen(
                                 viewModel.updateCurrentTabUrl(finalUrl)
                                 webViewRef?.loadUrl(finalUrl)
                             }
-                        ),
-                        placeholder = { Text("Search or enter address") }
+                        )
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Exit Browser")
-                    }
                 }
-            )
-        },
-        bottomBar = {
-            BottomAppBar {
-                IconButton(onClick = { webViewRef?.goBack() }, enabled = webViewRef?.canGoBack() == true) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
-                }
-                IconButton(onClick = { webViewRef?.goForward() }, enabled = webViewRef?.canGoForward() == true) {
-                    Icon(Icons.Default.ArrowForward, contentDescription = "Go Forward")
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                if (activeTab?.isLoading == true) {
-                    IconButton(onClick = { webViewRef?.stopLoading() }) {
-                        Icon(Icons.Default.Close, contentDescription = "Stop Loading")
-                    }
-                } else {
-                    IconButton(onClick = { webViewRef?.reload() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Reload")
-                    }
-                }
+
                 IconButton(onClick = { viewModel.addNewTab() }) {
                     Icon(Icons.Default.Add, contentDescription = "New Tab")
                 }
-                IconButton(onClick = { onNavigateToDownloads(null) }) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Downloads")
-                }
-                var showMenu by remember { mutableStateOf(false) }
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                }
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(4.dp)
+                        .border(2.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(8.dp))
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(if (viewModel.isAdBlockingEnabled) "Disable AdBlock" else "Enable AdBlock") },
-                        onClick = {
-                            viewModel.toggleAdBlocking()
-                            showMenu = false
-                            webViewRef?.reload()
+                    Text("${tabs.size}", style = MaterialTheme.typography.labelSmall)
+                }
+
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Back") },
+                            onClick = { webViewRef?.goBack(); showMenu = false },
+                            enabled = webViewRef?.canGoBack() == true
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Forward") },
+                            onClick = { webViewRef?.goForward(); showMenu = false },
+                            enabled = webViewRef?.canGoForward() == true
+                        )
+                        if (activeTab?.isLoading == true) {
+                            DropdownMenuItem(
+                                text = { Text("Stop Loading") },
+                                onClick = { webViewRef?.stopLoading(); showMenu = false }
+                            )
+                        } else {
+                            DropdownMenuItem(
+                                text = { Text("Reload") },
+                                onClick = { webViewRef?.reload(); showMenu = false }
+                            )
                         }
-                    )
+                        DropdownMenuItem(
+                            text = { Text("Downloads") },
+                            onClick = { onNavigateToDownloads(null); showMenu = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(if (viewModel.isAdBlockingEnabled) "Disable AdBlock" else "Enable AdBlock") },
+                            onClick = {
+                                viewModel.toggleAdBlocking()
+                                showMenu = false
+                                webViewRef?.reload()
+                            }
+                        )
+                    }
                 }
             }
         }
