@@ -136,7 +136,9 @@ fun CalculatorButton(
             text = symbol,
             fontSize = textSize,
             color = textColor,
-            fontWeight = FontWeight.Normal
+            fontWeight = FontWeight.Normal,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.wrapContentSize(Alignment.Center)
         )
     }
 }
