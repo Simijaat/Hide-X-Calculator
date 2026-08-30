@@ -304,3 +304,24 @@
 ## Validation Performed
 - Ran `./gradlew check` to verify standard lint and syntax checks pass. Fixed unreferenced import warnings.
 - Ran `./gradlew assembleDebug` to confirm full APK compilation succeeding.
+
+# PR10 - Calculator Improvements and Vault Enhancements
+
+## What was implemented
+- **Removed Screenshot Restriction**:
+  - Removed `WindowManager.LayoutParams.FLAG_SECURE` in `MainActivity.kt` to temporarily allow screenshots per user request.
+- **Calculator Logic & Formatting**:
+  - Prevented consecutive operator input (e.g., typing `++++`) by replacing the last operator dynamically.
+  - Made Vault Access checks synchronous (`checkVaultAccess` returns a Boolean directly instead of a Coroutine), fixing an issue where entering a correct PIN followed by `=` would wrongly attempt mathematical evaluation before navigating to the Vault.
+  - Formatted evaluation output using `DecimalFormat("#.##########")` to strip erratic floating-point artifacts (e.g. `10.0000000004` to `10`).
+- **Vault UI Additions**:
+  - Added placeholders and icons for "Documents" and "Audio" in `VaultScreen.kt`.
+  - Configured navigation graph (`VaultCalcNavigation.kt`) routes to accommodate `documents` and `audio` destinations smoothly using existing components.
+
+## Validation Performed
+- Repository builds successfully and seamlessly via `./gradlew clean test lint check assembleDebug`.
+- Verified `lint-results-debug.html` output confirming no breaking syntax errors or unresolved imports exist.
+
+## Known Issues / Limitations
+- Screenshot restriction (`FLAG_SECURE`) is intentionally disabled; should be re-enabled later once the core functional review passes.
+- Documents and Audio features remain placeholder destinations.

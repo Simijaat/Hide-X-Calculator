@@ -65,6 +65,12 @@ fun VaultCalcNavigation(
                 },
                 onNavigateToVideos = {
                     navController.navigate("videos")
+                },
+                onNavigateToDocuments = {
+                    navController.navigate("documents")
+                },
+                onNavigateToAudio = {
+                    navController.navigate("audio")
                 }
             )
         }
@@ -118,6 +124,12 @@ fun VaultCalcNavigation(
         }
         composable("videos") {
             PlaceholderScreen("Videos", onNavigateBack = { navController.popBackStack() })
+        }
+        composable("documents") {
+            PlaceholderScreen("Documents", onNavigateBack = { navController.popBackStack() })
+        }
+        composable("audio") {
+            PlaceholderScreen("Audio", onNavigateBack = { navController.popBackStack() })
         }
     }
 }

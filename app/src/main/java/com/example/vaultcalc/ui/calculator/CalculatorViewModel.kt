@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import java.text.DecimalFormat
 
 @HiltViewModel
 class CalculatorViewModel @Inject constructor(
@@ -95,8 +96,8 @@ class CalculatorViewModel @Inject constructor(
                         _state.value = _state.value.copy(displayValue = "0", isConfirmingPin = false)
                     }
                 } else {
-                    checkVaultAccess()
-                    if (!_state.value.navigateToVault) {
+                    val unlocked = checkVaultAccess()
+                    if (!unlocked) {
                         calculateResult()
                     }
                 }
@@ -110,6 +111,8 @@ class CalculatorViewModel @Inject constructor(
                     else -> symbol
                 }
 
+                val isOperator = { s: String -> s == "/" || s == "*" || s == "-" || s == "+" }
+
                 if (isResult) {
                     if (internalSymbol.all { it.isDigit() } || internalSymbol == ".") {
                         currentInput = internalSymbol
@@ -120,6 +123,9 @@ class CalculatorViewModel @Inject constructor(
                 } else {
                     if (_state.value.displayValue == "0" && internalSymbol != ".") {
                         currentInput = internalSymbol
+                    } else if (currentInput.isNotEmpty() && isOperator(currentInput.last().toString()) && isOperator(internalSymbol)) {
+                        // Prevent consecutive operators by replacing the last one
+                        currentInput = currentInput.dropLast(1) + internalSymbol
                     } else {
                         currentInput += internalSymbol
                     }
@@ -143,11 +149,8 @@ class CalculatorViewModel @Inject constructor(
                 throw ArithmeticException("Division by zero")
             }
             // format to remove .0 if it's a whole number
-            val formattedResult = if (result == result.toLong().toDouble()) {
-                result.toLong().toString()
-            } else {
-                result.toString()
-            }
+            val df = DecimalFormat("#.##########")
+            val formattedResult = df.format(result)
             currentInput = formattedResult
             isResult = true
             _state.value = _state.value.copy(displayValue = formattedResult.replace("-", "−"))
@@ -222,15 +225,15 @@ class CalculatorViewModel @Inject constructor(
         }.parse()
     }
 
-    private fun checkVaultAccess() {
-        viewModelScope.launch {
-            if (securityManager.isPinSet()) {
-                if (securityManager.verifyPin(currentInput)) {
-                    _state.value = _state.value.copy(navigateToVault = true)
-                    currentInput = ""
-                }
+    private fun checkVaultAccess(): Boolean {
+        if (securityManager.isPinSet()) {
+            if (securityManager.verifyPin(currentInput)) {
+                _state.value = _state.value.copy(navigateToVault = true)
+                currentInput = ""
+                return true
             }
         }
+        return false
     }
 
     fun onVaultNavigated() {
