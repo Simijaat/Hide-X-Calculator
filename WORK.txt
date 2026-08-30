@@ -325,3 +325,14 @@
 ## Known Issues / Limitations
 - Screenshot restriction (`FLAG_SECURE`) is intentionally disabled; should be re-enabled later once the core functional review passes.
 - Documents and Audio features remain placeholder destinations.
+
+
+# PR11 - Calculator Centering and Browser Enhancements
+
+## What was implemented
+- **Calculator UI**: Fixed symbol centering in `CalculatorButton` by applying `TextAlign.Center` and `wrapContentSize` to ensure symbols (like '+/-' and '÷') are perfectly aligned in the circular bubbles.
+- **Vault UI**: Added new apps for "Contacts" (using `Icons.Default.Person`) and "Files" (using `Icons.Default.Folder`), with corresponding placeholder routes.
+- **Browser System**: Implemented advanced browser UI features in `BrowserScreen.kt`. Added a clickable Tab counter that opens a `LazyColumn` overlay to switch/close tabs. Added a Bookmark Star toggle to the address bar and a Bookmarks Dialog to view and load saved bookmarks. Added a History Dialog to view and clear browsing history.
+
+## Validation Performed
+- Ran `./gradlew clean test lint check assembleDebug` to ensure all UI elements render correctly and there are no regressions in compilation or code quality.

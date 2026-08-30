@@ -71,6 +71,12 @@ fun VaultCalcNavigation(
                 },
                 onNavigateToAudio = {
                     navController.navigate("audio")
+                },
+                onNavigateToContacts = {
+                    navController.navigate("contacts")
+                },
+                onNavigateToFileManager = {
+                    navController.navigate("filemanager")
                 }
             )
         }
@@ -130,6 +136,12 @@ fun VaultCalcNavigation(
         }
         composable("audio") {
             PlaceholderScreen("Audio", onNavigateBack = { navController.popBackStack() })
+        }
+        composable("contacts") {
+            PlaceholderScreen("Contacts", onNavigateBack = { navController.popBackStack() })
+        }
+        composable("filemanager") {
+            PlaceholderScreen("File Manager", onNavigateBack = { navController.popBackStack() })
         }
     }
 }
