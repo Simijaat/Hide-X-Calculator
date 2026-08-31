@@ -336,3 +336,26 @@
 
 ## Validation Performed
 - Ran `./gradlew clean test lint check assembleDebug` to ensure all UI elements render correctly and there are no regressions in compilation or code quality.
+
+# PR12 - Advanced Security, Notes, and Browser Tab System
+
+## What was implemented
+- **Browser Improvements**:
+  - Changed default search engine to Google.
+  - Implemented persistent tab storage using Room (`BrowserTabEntity`, `BrowserDao`, `BrowserDatabase`, `BrowserRepository`).
+  - Added an advanced `LazyVerticalGrid` Tab Switcher with visual thumbnails (captured securely via WebView Canvas drawing).
+- **Persistent Storage & Security (Uninstall Survival)**:
+  - Added external storage permissions to `AndroidManifest.xml` (MANAGE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE).
+  - Created `ExternalStorageManager` using AES/GCM encryption with PBKDF2 key derivation.
+  - Refactored `VaultSecurityManager` to store configs (PIN hash, salt, Security Question) in a hidden public directory (`Documents/.VaultCalc/config.json`) making them survive app uninstalls.
+- **Security Question & Settings**:
+  - Implemented `SettingsScreen` and `SettingsViewModel` for PIN updates and Security Question setup.
+  - Linked the Settings screen into the Vault grid and navigation graph.
+  - Hooked up `CalculatorViewModel` to intercept `11223344=` and trigger a secure PIN Reset flow using the user's security question.
+- **Notes App**:
+  - Implemented `NotesScreen` and `NotesViewModel` providing a full CRUD text editor UI.
+  - Notes are saved externally but heavily encrypted using the active PIN key, preventing raw system-level reading but allowing persistence across reinstalls.
+
+## Validation Performed
+- `./gradlew clean test lint check` ran successfully.
+- Code changes were reviewed and correctly compile without syntax errors.
