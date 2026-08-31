@@ -112,9 +112,9 @@ fun CalculatorScreen(
         // Setup Hint
         if (!state.isPinSet) {
             val hintText = if (state.isConfirmingPin) {
-                "Confirm your 4+ digit PIN and press ="
+                "Confirm your 4 digit PIN and press ="
             } else {
-                "Set a 4+ digit PIN and press ="
+                "Set a 4 digit PIN and press ="
             }
             Text(
                 text = hintText,

@@ -123,7 +123,7 @@ class CalculatorViewModel @Inject constructor(
                     }
                 }
                 
-                if (!securityManager.isPinSet() && currentInput.length >= 4 && currentInput.all { it.isDigit() }) {
+                if (!securityManager.isPinSet() && currentInput.length == 4 && currentInput.all { it.isDigit() }) {
                     if (setupPin == null) {
                         setupPin = currentInput
                         currentInput = ""
