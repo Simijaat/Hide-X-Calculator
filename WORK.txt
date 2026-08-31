@@ -359,3 +359,24 @@
 ## Validation Performed
 - `./gradlew clean test lint check` ran successfully.
 - Code changes were reviewed and correctly compile without syntax errors.
+
+# PR13 - Production-ready Settings, Calculator Bug Fixes, and Persistent Storage
+## What was implemented
+- **Browser Improvements**:
+  - Changed default search engine to Google.
+  - Implemented advanced multi-tab layout using `LazyVerticalGrid`.
+- **Persistent Storage & Security (Uninstall Survival)**:
+  - Created `ExternalStorageManager` using AES/GCM encryption to safely write configs to `Documents/.VaultCalc/`.
+  - Refactored `VaultSecurityManager` to store configs and the Security Question in `ExternalStorageManager`.
+  - Refactored `BrowserRepository` to sync to `ExternalStorageManager`.
+- **Settings & Notes**:
+  - Implemented `SettingsScreen` and `SettingsViewModel` for PIN updates and Security Question setup.
+  - Created `NotesScreen` to save notes securely to external storage.
+- **Calculator Backdoor & Fixes**:
+  - Intercepts `11223344=` to trigger a secure PIN Reset flow using the user's security question.
+  - Fixed mathematical bugs handling percentage parsing (`%`) within equations.
+  - Fixed `+/-` toggling behavior so it only toggles the sign of the *last typed* number instead of negating the whole expression.
+  - Fixed trailing operator evaluation failures.
+
+## Validation Performed
+- Ran `./gradlew clean test lint check assembleDebug`. All tests passed.
