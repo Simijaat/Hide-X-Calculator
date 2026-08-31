@@ -1,5 +1,7 @@
 package com.example.vaultcalc.ui.calculator
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -62,17 +64,28 @@ fun CalculatorScreen(
         }
 
         // Display area
-        Text(
-            text = state.displayValue,
+        val scrollState = rememberScrollState()
+        LaunchedEffect(state.displayValue) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 32.dp, horizontal = 16.dp),
-            textAlign = TextAlign.End,
-            fontWeight = FontWeight.Light,
-            fontSize = if (state.displayValue.length > 8) 60.sp else 90.sp,
-            color = WhiteText,
-            maxLines = 1
-        )
+                .padding(vertical = 32.dp, horizontal = 16.dp)
+                .horizontalScroll(scrollState),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Text(
+                text = state.displayValue,
+                textAlign = TextAlign.End,
+                fontWeight = FontWeight.Light,
+                fontSize = if (state.displayValue.length > 8) 60.sp else 90.sp,
+                color = WhiteText,
+                maxLines = 1,
+                softWrap = false
+            )
+        }
 
         // Buttons
         val buttons = listOf(

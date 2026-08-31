@@ -359,3 +359,21 @@
 ## Validation Performed
 - `./gradlew clean test lint check` ran successfully.
 - Code changes were reviewed and correctly compile without syntax errors.
+
+# PR13 - App Stability and Uninstall Persistence Fixes
+
+## What was implemented
+- **Calculator UI Bug Fix**:
+  - Wrapped `CalculatorScreen` display in a horizontally scrollable container to prevent text overlapping for large inputs/results.
+- **External Storage Permissions**:
+  - Added `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` to `AndroidManifest.xml` to allow creating an external Vault directory (e.g. `Documents/.VaultCalc/`) that survives app reinstall/clear data.
+- **Crypto & External Storage Managers**:
+  - Created `VaultCryptoManager` for handling robust AES-GCM authenticated encryption and PBKDF2 key derivation.
+  - Created `VaultStorageManager` to handle reading/writing the `config.json` externally.
+  - Re-wired `VaultSecurityManager` to gracefully migrate legacy `EncryptedSharedPreferences` credentials over to the new external encrypted container when the user unlocks their vault with the old PIN.
+
+## Validation Performed
+- Repository builds successfully and seamlessly via `./gradlew clean test lint check assembleDebug`.
+
+## Known Limitations / Future Work
+- Android 10+ scoped storage limitations mean that storing files inside `Documents/` still may not persist completely unless they are explicitly media types, or if the user grants broad access via SAF. A complete robust file-manager migration is needed next.

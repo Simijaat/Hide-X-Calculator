@@ -1,6 +1,10 @@
 package com.example.vaultcalc.data.security
 
 import android.content.Context
+import com.example.vaultcalc.data.crypto.VaultCryptoManager
+import com.example.vaultcalc.data.crypto.VaultStorageManager
+import javax.crypto.SecretKey
+
 import android.content.SharedPreferences
 import android.util.Base64
 import androidx.security.crypto.EncryptedSharedPreferences
@@ -46,40 +50,145 @@ class VaultSecurityManager @Inject constructor(
     private val _isVaultUnlocked = MutableStateFlow(false)
     val isVaultUnlocked: StateFlow<Boolean> = _isVaultUnlocked.asStateFlow()
 
+    // We store the master key in memory once unlocked
+    var activeMasterKey: SecretKey? = null
+        private set
+
     fun isPinSet(): Boolean {
-        return sharedPreferences.contains(KEY_PIN_HASH) && sharedPreferences.contains(KEY_PIN_SALT)
+        return VaultStorageManager.hasConfig() || (sharedPreferences.contains(KEY_PIN_HASH) && sharedPreferences.contains(KEY_PIN_SALT))
     }
 
-    fun setPin(pin: String) {
-        val salt = ByteArray(16)
-        SecureRandom().nextBytes(salt)
+    fun setPinAndRecovery(pin: String, question: String, answer: String) {
+        val pinSalt = VaultCryptoManager.generateRandomSalt()
+        val recoverySalt = VaultCryptoManager.generateRandomSalt()
 
-        val hash = hashPin(pin, salt)
+        val masterKey = activeMasterKey ?: VaultCryptoManager.generateMasterKey()
 
-        sharedPreferences.edit()
-            .putString(KEY_PIN_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
-            .putString(KEY_PIN_HASH, Base64.encodeToString(hash, Base64.NO_WRAP))
-            .apply()
+        val pinDerivedKey = VaultCryptoManager.deriveKey(pin, pinSalt)
+        val recoveryDerivedKey = VaultCryptoManager.deriveKey(answer.trim().lowercase(), recoverySalt)
 
+        val (encryptedMasterKeyWithPin, pinIv) = VaultCryptoManager.encryptMasterKey(masterKey, pinDerivedKey)
+        val (encryptedMasterKeyWithRecovery, recoveryIv) = VaultCryptoManager.encryptMasterKey(masterKey, recoveryDerivedKey)
+
+        val pinHash = hashPin(pin, pinSalt)
+
+        VaultStorageManager.saveConfig(
+            pinSalt = pinSalt,
+            recoverySalt = recoverySalt,
+            encryptedMasterKeyWithPin = encryptedMasterKeyWithPin,
+            pinIv = pinIv,
+            encryptedMasterKeyWithRecovery = encryptedMasterKeyWithRecovery,
+            recoveryIv = recoveryIv,
+            securityQuestion = question,
+            pinHash = pinHash
+        )
+
+        activeMasterKey = masterKey
         updateActivity()
         _isVaultUnlocked.value = true
     }
 
+    fun setPin(pin: String) {
+        setPinAndRecovery(pin, "What is your favorite color?", "blue")
+    }
+
     fun verifyPin(pin: String): Boolean {
-        val storedSalt64 = sharedPreferences.getString(KEY_PIN_SALT, null) ?: return false
-        val storedHash64 = sharedPreferences.getString(KEY_PIN_HASH, null) ?: return false
+        if (!VaultStorageManager.hasConfig() && sharedPreferences.contains(KEY_PIN_HASH)) {
+            // Migrate old format to new format
+            val storedSalt64 = sharedPreferences.getString(KEY_PIN_SALT, null) ?: return false
+            val storedHash64 = sharedPreferences.getString(KEY_PIN_HASH, null) ?: return false
 
-        val storedSalt = Base64.decode(storedSalt64, Base64.NO_WRAP)
-        val storedHash = Base64.decode(storedHash64, Base64.NO_WRAP)
+            val storedSalt = android.util.Base64.decode(storedSalt64, android.util.Base64.NO_WRAP)
+            val storedHash = android.util.Base64.decode(storedHash64, android.util.Base64.NO_WRAP)
 
-        val computedHash = hashPin(pin, storedSalt)
+            val computedHash = hashPin(pin, storedSalt)
 
-        val isValid = MessageDigest.isEqual(storedHash, computedHash)
-        if (isValid) {
-            updateActivity()
-            _isVaultUnlocked.value = true
+            val isValid = MessageDigest.isEqual(storedHash, computedHash)
+            if (isValid) {
+                // Pin is correct, generate new master key and save in new format
+                setPinAndRecovery(pin, "What is your favorite color?", "blue") // Provide default
+                // Clear old prefs to avoid remigration
+                sharedPreferences.edit().clear().apply()
+                return true
+            }
+            return false
         }
-        return isValid
+
+        val config = VaultStorageManager.loadConfig() ?: return false
+        val computedHash = hashPin(pin, config.pinSalt)
+        val isValid = MessageDigest.isEqual(config.pinHash, computedHash)
+
+        if (isValid) {
+            try {
+                val derivedKey = VaultCryptoManager.deriveKey(pin, config.pinSalt)
+                activeMasterKey = VaultCryptoManager.decryptMasterKey(config.encryptedMasterKeyWithPin, config.pinIv, derivedKey)
+                updateActivity()
+                _isVaultUnlocked.value = true
+                return true
+            } catch (e: Exception) {
+                return false
+            }
+        }
+        return false
+    }
+
+    fun getSecurityQuestion(): String? {
+        return VaultStorageManager.loadConfig()?.securityQuestion
+    }
+
+    fun verifyRecoveryAnswer(answer: String): Boolean {
+        val config = VaultStorageManager.loadConfig() ?: return false
+        try {
+            val derivedKey = VaultCryptoManager.deriveKey(answer.trim().lowercase(), config.recoverySalt)
+            activeMasterKey = VaultCryptoManager.decryptMasterKey(config.encryptedMasterKeyWithRecovery, config.recoveryIv, derivedKey)
+            // Valid if decryption succeeds without throwing AEADBadTagException
+            return true
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    fun changePinWithRecovery(newPin: String): Boolean {
+        val config = VaultStorageManager.loadConfig() ?: return false
+        if (activeMasterKey == null) return false
+        // We preserve the existing recovery answer/question, re-derive with new pin.
+        val pinSalt = VaultCryptoManager.generateRandomSalt()
+        val pinDerivedKey = VaultCryptoManager.deriveKey(newPin, pinSalt)
+        val (encryptedMasterKeyWithPin, pinIv) = VaultCryptoManager.encryptMasterKey(activeMasterKey!!, pinDerivedKey)
+        val pinHash = hashPin(newPin, pinSalt)
+
+        VaultStorageManager.saveConfig(
+            pinSalt = pinSalt,
+            recoverySalt = config.recoverySalt,
+            encryptedMasterKeyWithPin = encryptedMasterKeyWithPin,
+            pinIv = pinIv,
+            encryptedMasterKeyWithRecovery = config.encryptedMasterKeyWithRecovery,
+            recoveryIv = config.recoveryIv,
+            securityQuestion = config.securityQuestion,
+            pinHash = pinHash
+        )
+        return true
+    }
+
+    fun changeSecurityQuestion(newQuestion: String, newAnswer: String): Boolean {
+        val config = VaultStorageManager.loadConfig() ?: return false
+        if (activeMasterKey == null) return false
+
+        val recoverySalt = VaultCryptoManager.generateRandomSalt()
+        val recoveryDerivedKey = VaultCryptoManager.deriveKey(newAnswer.trim().lowercase(), recoverySalt)
+        val (encryptedMasterKeyWithRecovery, recoveryIv) = VaultCryptoManager.encryptMasterKey(activeMasterKey!!, recoveryDerivedKey)
+
+        VaultStorageManager.saveConfig(
+            pinSalt = config.pinSalt,
+            recoverySalt = recoverySalt,
+            encryptedMasterKeyWithPin = config.encryptedMasterKeyWithPin,
+            pinIv = config.pinIv,
+            encryptedMasterKeyWithRecovery = encryptedMasterKeyWithRecovery,
+            recoveryIv = recoveryIv,
+            securityQuestion = newQuestion,
+            pinHash = config.pinHash
+        )
+        return true
     }
 
     private fun hashPin(pin: String, salt: ByteArray): ByteArray {
