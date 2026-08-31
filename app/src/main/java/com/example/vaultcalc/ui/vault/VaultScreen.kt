@@ -47,7 +47,6 @@ data class VaultApp(
 fun VaultScreen(
     onNavigateBack: () -> Unit,
     onNavigateToBrowser: () -> Unit,
-    onNavigateToVpn: () -> Unit,
     onNavigateToDownloads: () -> Unit,
     onNavigateToNotes: () -> Unit,
     onNavigateToPhotos: () -> Unit,
@@ -78,7 +77,7 @@ fun VaultScreen(
 
         val apps = listOf(
             VaultApp("Browser", Icons.Default.Search, Color(0xFF1E88E5), onNavigateToBrowser),
-            VaultApp("VPN", Icons.Default.Settings, Color(0xFF43A047), onNavigateToVpn),
+            
             VaultApp("Downloads", Icons.Default.KeyboardArrowDown, Color(0xFF8E24AA), onNavigateToDownloads),
             VaultApp("Notes", Icons.Default.Edit, Color(0xFFFBC02D), onNavigateToNotes),
             VaultApp("Photos", Icons.Default.AccountBox, Color(0xFFE53935), onNavigateToPhotos),

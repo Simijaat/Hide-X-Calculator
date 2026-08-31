@@ -11,7 +11,6 @@ import com.example.vaultcalc.data.security.VaultSecurityManager
 import com.example.vaultcalc.ui.calculator.CalculatorScreen
 import com.example.vaultcalc.ui.vault.VaultScreen
 import com.example.vaultcalc.ui.browser.BrowserScreen
-import com.example.vaultcalc.ui.vpn.VpnScreen
 import com.example.vaultcalc.ui.download.DownloadCenterScreen
 import com.example.vaultcalc.ui.PlaceholderScreen
 import kotlinx.coroutines.flow.StateFlow
@@ -51,9 +50,6 @@ fun VaultCalcNavigation(
                 onNavigateToBrowser = {
                     navController.navigate("browser")
                 },
-                onNavigateToVpn = {
-                    navController.navigate("vpn")
-                },
                 onNavigateToDownloads = {
                     navController.navigate("downloads")
                 },
@@ -91,13 +87,6 @@ fun VaultCalcNavigation(
                 onNavigateToDownloads = { url ->
                     _browserDownloadUrl.value = url
                     navController.navigate("downloads")
-                }
-            )
-        }
-        composable("vpn") {
-            VpnScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
                 }
             )
         }
