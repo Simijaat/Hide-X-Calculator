@@ -46,7 +46,7 @@ class CalculatorViewModel @Inject constructor(
     }
 
     fun submitNewPin(newPin: String) {
-        if (newPin.length >= 4) {
+        if (newPin.length == 4 && newPin.all { it.isDigit() }) {
             securityManager.changePinWithRecovery(newPin)
             _state.value = _state.value.copy(
                 isSettingNewPin = false,

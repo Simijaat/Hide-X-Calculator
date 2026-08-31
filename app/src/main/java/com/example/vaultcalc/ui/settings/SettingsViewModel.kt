@@ -13,7 +13,7 @@ class SettingsViewModel @Inject constructor(
     val currentQuestion = securityManager.getSecurityQuestion()
 
     fun updatePin(newPin: String): Boolean {
-        if (newPin.length >= 4) {
+        if (newPin.length == 4 && newPin.all { it.isDigit() }) {
              return securityManager.changePinWithRecovery(newPin)
         }
         return false

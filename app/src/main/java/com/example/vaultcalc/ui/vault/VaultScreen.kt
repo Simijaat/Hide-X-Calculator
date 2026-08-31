@@ -77,7 +77,6 @@ fun VaultScreen(
 
         val apps = listOf(
             VaultApp("Browser", Icons.Default.Search, Color(0xFF1E88E5), onNavigateToBrowser),
-            
             VaultApp("Downloads", Icons.Default.KeyboardArrowDown, Color(0xFF8E24AA), onNavigateToDownloads),
             VaultApp("Notes", Icons.Default.Edit, Color(0xFFFBC02D), onNavigateToNotes),
             VaultApp("Photos", Icons.Default.AccountBox, Color(0xFFE53935), onNavigateToPhotos),
