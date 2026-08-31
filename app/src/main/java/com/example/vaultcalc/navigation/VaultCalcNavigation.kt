@@ -77,6 +77,9 @@ fun VaultCalcNavigation(
                 },
                 onNavigateToFileManager = {
                     navController.navigate("filemanager")
+                },
+                onNavigateToSettings = {
+                    navController.navigate("settings")
                 }
             )
         }
@@ -123,7 +126,7 @@ fun VaultCalcNavigation(
             )
         }
         composable("notes") {
-            PlaceholderScreen("Notes", onNavigateBack = { navController.popBackStack() })
+            com.example.vaultcalc.ui.notes.NotesScreen(onNavigateBack = { navController.popBackStack() })
         }
         composable("photos") {
             PlaceholderScreen("Photos", onNavigateBack = { navController.popBackStack() })
@@ -142,6 +145,9 @@ fun VaultCalcNavigation(
         }
         composable("filemanager") {
             PlaceholderScreen("File Manager", onNavigateBack = { navController.popBackStack() })
+        }
+        composable("settings") {
+            com.example.vaultcalc.ui.settings.SettingsScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

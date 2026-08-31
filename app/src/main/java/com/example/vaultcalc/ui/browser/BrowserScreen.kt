@@ -64,7 +64,7 @@ fun BrowserScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = {
-                    val homeUrl = "https://duckduckgo.com"
+                    val homeUrl = "https://www.google.com"
                     urlInput = homeUrl
                     viewModel.updateCurrentTabUrl(homeUrl)
                     webViewRef?.loadUrl(homeUrl)

@@ -12,6 +12,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -29,6 +34,65 @@ fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    
+    val (recoveryAnswer, setRecoveryAnswer) = remember { mutableStateOf("") }
+    val (newPin, setNewPin) = remember { mutableStateOf("") }
+
+    if (state.isRecovering) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelRecovery() },
+            title = { Text("Security Recovery") },
+            text = {
+                Column {
+                    Text(state.recoveryQuestion)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = recoveryAnswer,
+                        onValueChange = setRecoveryAnswer,
+                        label = { Text("Answer") }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.submitRecoveryAnswer(recoveryAnswer); setRecoveryAnswer("") }) {
+                    Text("Submit")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelRecovery(); setRecoveryAnswer("") }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (state.isSettingNewPin) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelRecovery() },
+            title = { Text("Set New PIN") },
+            text = {
+                Column {
+                    Text("Enter a new PIN (min 4 digits)")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newPin,
+                        onValueChange = setNewPin,
+                        label = { Text("New PIN") }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.submitNewPin(newPin); setNewPin("") }) {
+                    Text("Submit")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelRecovery(); setNewPin("") }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     // Listen for vault access securely using LaunchedEffect
     LaunchedEffect(state.navigateToVault) {

@@ -55,7 +55,8 @@ fun VaultScreen(
     onNavigateToDocuments: () -> Unit,
     onNavigateToAudio: () -> Unit,
     onNavigateToContacts: () -> Unit,
-    onNavigateToFileManager: () -> Unit
+    onNavigateToFileManager: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -85,7 +86,8 @@ fun VaultScreen(
             VaultApp("Documents", Icons.Default.List, Color(0xFF00ACC1), onNavigateToDocuments),
             VaultApp("Audio", Icons.Default.Notifications, Color(0xFFFF7043), onNavigateToAudio),
             VaultApp("Contacts", Icons.Default.Person, Color(0xFF4DD0E1), onNavigateToContacts),
-            VaultApp("Files", Icons.Default.Folder, Color(0xFFFFB300), onNavigateToFileManager)
+            VaultApp("Files", Icons.Default.Folder, Color(0xFFFFB300), onNavigateToFileManager),
+            VaultApp("Settings", Icons.Default.Settings, Color(0xFF9E9E9E), onNavigateToSettings)
         )
 
         LazyVerticalGrid(
