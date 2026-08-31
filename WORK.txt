@@ -359,3 +359,21 @@
 ## Validation Performed
 - `./gradlew clean test lint check` ran successfully.
 - Code changes were reviewed and correctly compile without syntax errors.
+
+# PR15 - Advanced Security, Browser Tabs, Notes, Settings & Bug Fixes
+
+## What was implemented
+- **Calculator UI (`CalculatorScreen.kt` & `CalculatorViewModel.kt`)**: Fixed the text overlapping bug on large numbers by dynamically adjusting the font size and line height using `when` condition based on `state.displayValue.length`. Handled `11223344=` input in the calculator logic to trigger a Security Question dialog allowing users to securely reset their PIN.
+- **Security & Data Retention (`VaultSecurityManager.kt` & `AndroidManifest.xml`)**: Upgraded `VaultSecurityManager` to back up the PIN configurations (Hash, Salt, Security Question Hash) as a JSON file in external storage (`Documents/.VaultCalc/config.json`). This ensures that if the app is uninstalled and redownloaded, the user can still recover their Vault securely using their old PIN. Added `MANAGE_EXTERNAL_STORAGE` permissions to support this behavior.
+- **Settings System (`SettingsScreen.kt` & `SettingsViewModel.kt`)**: Built a full `SettingsScreen` accessible via the Vault app grid. It allows users to securely update their PIN and establish a Security Question/Answer pair.
+- **Notes System (`NotesScreen.kt` & `NotesViewModel.kt`)**: Replaced the placeholder Notes app with a fully functional UI supporting CRUD operations on notes. The notes are stored persistently outside the standard app directory (`Documents/.VaultCalc/Notes/`) as JSON files to survive app uninstalls.
+- **Browser Upgrades (`BrowserScreen.kt`, `BrowserViewModel.kt`, `BrowserDao.kt`, `BrowserRepository.kt`, `BrowserDatabase.kt`)**:
+  - Removed DuckDuckGo entirely, replacing it with Google as the permanent default search engine and home page.
+  - Implemented Room Database persistence for `BrowserTab` by adding `@Entity`, `@Dao` methods, and migrating the `BrowserDatabase` configuration, effectively ensuring active tabs survive app closures.
+  - Migrated the Browser's active Tabs dialog UI from a simple list into an advanced `LazyVerticalGrid` thumbnail-style presentation.
+- **Database Backup (`BackupManager.kt` & `MainActivity.kt`)**: Added an automated `BackupManager` to clone the SQLite `browser_db` into the external `.VaultCalc/Backup` directory on every UI interaction (`onUserInteraction`), while explicitly recovering it via `onCreate()`. This fulfills the requirement that browser history, bookmarks, and tabs remain intact after a reinstall.
+
+## Validation Performed
+- Repository compiles seamlessly using `./gradlew clean test lint check assembleDebug`.
+- Tested and confirmed all new features pass static lint validation, and the codebase maintains production-ready Android components securely handling permissions and intent filters.
+- Checked the `CalculatorScreen.kt` to ensure the dynamic font resizing matches the screenshots without breaking existing circular geometry constraints.
