@@ -29,7 +29,7 @@ class VaultSecurityManager @Inject constructor(
     private val KEY_PIN_SALT = "vault_pin_salt"
 
     // Security constants
-    private val ITERATIONS = 100000
+    private val ITERATIONS = 5000
     private val KEY_LENGTH = 256
     private val INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000L // 2 minutes
 

@@ -17,7 +17,7 @@ object VaultCryptoManager {
     private const val GCM_TAG_LENGTH = 128
 
     private const val KDF_ALGORITHM = "PBKDF2WithHmacSHA256"
-    private const val KDF_ITERATIONS = 100000
+    private const val KDF_ITERATIONS = 5000
     private const val KDF_KEY_LENGTH = 256
 
     fun generateRandomSalt(): ByteArray {

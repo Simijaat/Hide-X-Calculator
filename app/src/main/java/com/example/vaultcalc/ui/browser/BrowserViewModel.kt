@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -31,12 +32,13 @@ class BrowserViewModel @Inject constructor(
 
     val bookmarks = browserRepository.getBookmarks()
     val history = browserRepository.getHistory()
+    val recentSearchHistory = browserRepository.getHistory().map { list -> list.take(10) }
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             adBlockManager.loadRules()
-            addNewTab()
         }
+        addNewTab("")
     }
 
     fun addNewTab(url: String = "https://duckduckgo.com") {

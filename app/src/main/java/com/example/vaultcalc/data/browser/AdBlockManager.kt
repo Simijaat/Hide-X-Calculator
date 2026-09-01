@@ -67,13 +67,11 @@ class AdBlockManager @Inject constructor(private val context: Context) {
         isEnabled = enabled
     }
 
-    fun isAd(url: String): Boolean {
+    fun isAd(url: String, currentUrl: String = ""): Boolean {
         if (!isEnabled) return false
         return try {
             val uri = Uri.parse(url)
             val host = uri.host?.lowercase() ?: return false
-            val path = uri.path?.lowercase() ?: ""
-            
             isHostBlocked(host) || isWildcardBlocked(host) || isKeywordBlocked(url.lowercase())
         } catch (e: Exception) {
             false
