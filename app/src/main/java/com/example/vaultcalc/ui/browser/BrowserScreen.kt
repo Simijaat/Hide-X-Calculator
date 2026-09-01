@@ -83,7 +83,133 @@ fun BrowserScreen(
 
     Scaffold(
         containerColor = AppBlack,
-        ) { paddingValues ->
+        topBar = {
+            if (activeTab != null && activeTab.url.isNotEmpty()) {
+                Surface(
+                    color = AppBlack,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                            }
+
+                            // Premium pill-shaped address bar
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(Color(0xFF2C2C2C))
+                                    .clickable { /* Could open a search dialog here, for now just show URL */ }
+                                    .padding(horizontal = 16.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = "Secure",
+                                        tint = Color(0xFF34C759), // iOS green
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = activeTab.url,
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    IconButton(
+                                        onClick = {
+                                            webViewRef?.reload()
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Refresh, contentDescription = "Reload", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+
+                            IconButton(onClick = { showTabsScreen = true }) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .border(2.dp, Color.White, RoundedCornerShape(4.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = tabs.size.toString(),
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Box {
+                                IconButton(onClick = { showMenu = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
+                                }
+                                DropdownMenu(
+                                    expanded = showMenu,
+                                    onDismissRequest = { showMenu = false },
+                                    modifier = Modifier.background(Color(0xFF2C2C2C))
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Bookmarks", color = Color.White) },
+                                        onClick = { showBookmarksDialog = true; showMenu = false }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("History", color = Color.White) },
+                                        onClick = { showHistoryDialog = true; showMenu = false }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(if (isBookmarked) "Remove Bookmark" else "Add Bookmark", color = Color.White) },
+                                        onClick = {
+                                            activeTab.url.let { url ->
+                                                if (url.isNotEmpty()) {
+                                                    if (isBookmarked) {
+                                                        viewModel.removeBookmark(url)
+                                                    } else {
+                                                        viewModel.addBookmark(url, activeTab.title)
+                                                    }
+                                                }
+                                            }
+                                            showMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        // Premium progress bar (thin, iOS style)
+                        if (activeTab.isLoading) {
+                            LinearProgressIndicator(
+                                progress = activeTab.progress / 100f,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(2.dp),
+                                color = Color(0xFF0A84FF), // iOS Blue
+                                trackColor = Color.Transparent
+                            )
+                        } else {
+                            Spacer(modifier = Modifier.height(2.dp))
+                        }
+                    }
+                }
+            }
+        }
+    ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
 
             // Render specific tab content (Home Page OR WebView)
@@ -99,10 +225,19 @@ fun BrowserScreen(
                                 viewModel.updateCurrentTabUrl(finalUrl)
                                 webViewRef?.loadUrl(finalUrl)
                             },
-                            onClearHistory = { viewModel.clearHistory() }
+                            onClearHistory = { viewModel.clearHistory() },
+                            onShowTabs = { showTabsScreen = true },
+                            tabsCount = tabs.size,
+                            onNavigateBack = onNavigateBack
                         )
                     } else {
                         AndroidView(
+                            update = { webView ->
+                                webViewRef = webView
+                                if (webView.url != activeTab.url && activeTab.url.isNotEmpty()) {
+                                    webView.loadUrl(activeTab.url)
+                                }
+                            },
                             modifier = Modifier.fillMaxSize(),
                             factory = { ctx ->
                                 WebView(ctx).apply {
@@ -204,13 +339,43 @@ fun BrowserHomePage(
     urlInput: String,
     onUrlInputChange: (String) -> Unit,
     onSearch: (String) -> Unit,
-    onClearHistory: () -> Unit
+    onClearHistory: () -> Unit,
+    onShowTabs: () -> Unit,
+    tabsCount: Int,
+    onNavigateBack: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxSize().background(AppBlack).padding(top = 16.dp, start = 16.dp, end = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Top Bar area for Home Page
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onNavigateBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+            }
+            IconButton(onClick = onShowTabs) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .border(2.dp, Color.White, RoundedCornerShape(4.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = tabsCount.toString(),
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(0.2f))
+
         Text(
             text = "G O O G L E",
             fontSize = 42.sp,
@@ -228,8 +393,8 @@ fun BrowserHomePage(
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(28.dp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFF2C2C2C),
-                unfocusedContainerColor = Color(0xFF2C2C2C),
+                focusedContainerColor = Color(0xFF1E1E1E),
+                unfocusedContainerColor = Color(0xFF1E1E1E),
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedTextColor = Color.White,

@@ -377,3 +377,19 @@
 
 ## Known Limitations / Future Work
 - Android 10+ scoped storage limitations mean that storing files inside `Documents/` still may not persist completely unless they are explicitly media types, or if the user grants broad access via SAF. A complete robust file-manager migration is needed next.
+
+# PR14 - Browser Search Crash Fix & Premium UI
+
+## What was implemented
+- **Browser Crash Fix**:
+  - Found and fixed an issue where `SecureWebViewClient` incorrectly accessed `view?.url` on a background thread inside `shouldInterceptRequest`. Android strictly prohibits invoking `WebView` methods off the main UI thread.
+- **Premium Browser UI**:
+  - Modified the address bar to match an iOS-style "pill" layout.
+  - Replaced the simple text field with a sleek rounded container (`RoundedCornerShape(24.dp)`), an iOS-green lock icon (`Icons.Default.Lock`), the current URL truncated gracefully, and a trailing reload button.
+  - Implemented an elegant, thin `LinearProgressIndicator` directly beneath the address bar (iOS Blue) to seamlessly indicate page loading progress without consuming vertical screen real estate.
+  - Ensured the `AndroidView` holding the `WebView` reacts properly to state changes via the `update` block to dynamically load URLs instead of just applying configurations strictly upon factory initialization.
+
+## Validation Performed
+- Ensured UI elements compile successfully via `./gradlew assembleDebug`.
+- Ran unit tests specifically written for URL formatting logic (`FormatSearchUrlTest`) and layout structures successfully via `./gradlew clean test`.
+- Ran static code analysis via `./gradlew lint` effectively clearing unused references.
