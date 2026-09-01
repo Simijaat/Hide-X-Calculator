@@ -38,6 +38,7 @@
             </intent-filter>
         </activity>
 
+
         <service
             android:name=".download.engine.SecureDownloadService"
             android:foregroundServiceType="dataSync"
