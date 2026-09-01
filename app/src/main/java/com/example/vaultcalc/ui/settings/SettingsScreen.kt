@@ -46,7 +46,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
             )
             Button(
-                onClick = { 
+                onClick = {
                     if (viewModel.updatePin(newPin)) {
                         message = "PIN Updated"
                         newPin = ""
@@ -87,7 +87,7 @@ fun SettingsScreen(
             ) {
                 Text("Update Question")
             }
-            
+
             if (message.isNotEmpty()) {
                 Text(message, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp))
             }

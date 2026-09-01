@@ -20,8 +20,6 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -71,10 +69,10 @@ fun VaultScreen(
     ) { padding ->
 
         val apps = listOf(
-            VaultApp("Photos", Icons.Default.AccountBox, Color(0xFFE53935), onNavigateToPhotos),
-            VaultApp("Videos", Icons.Default.PlayArrow, Color(0xFF3949AB), onNavigateToVideos),
             VaultApp("Browser", Icons.Default.Search, Color(0xFF1E88E5), onNavigateToBrowser),
             VaultApp("Downloads", Icons.Default.KeyboardArrowDown, Color(0xFF8E24AA), onNavigateToDownloads),
+            VaultApp("Photos", Icons.Default.AccountBox, Color(0xFFE53935), onNavigateToPhotos),
+            VaultApp("Videos", Icons.Default.PlayArrow, Color(0xFF3949AB), onNavigateToVideos),
             VaultApp("Settings", Icons.Default.Settings, Color(0xFF9E9E9E), onNavigateToSettings)
         )
 

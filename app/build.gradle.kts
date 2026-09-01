@@ -68,6 +68,7 @@ dependencies {
 
     // Security Crypto
     implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+    implementation("androidx.documentfile:documentfile:1.0.1")
 
     // ViewModel Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")

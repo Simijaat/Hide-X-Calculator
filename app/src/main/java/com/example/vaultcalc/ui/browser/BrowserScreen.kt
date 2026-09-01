@@ -68,9 +68,9 @@ fun BrowserScreen(
             tabs = tabs,
             activeTabId = activeTabId,
             onCloseTab = { viewModel.closeTab(it) },
-            onSwitchTab = { 
+            onSwitchTab = {
                 viewModel.switchTab(it)
-                showTabsScreen = false 
+                showTabsScreen = false
             },
             onAddTab = {
                 viewModel.addNewTab("")
@@ -85,7 +85,7 @@ fun BrowserScreen(
         containerColor = AppBlack,
         ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
-            
+
             // Render specific tab content (Home Page OR WebView)
             key(activeTab?.id) {
                 if (activeTab != null) {
@@ -120,10 +120,10 @@ fun BrowserScreen(
                                         mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                                     }
 
-                                    
+
 
                                     webViewClient = SecureWebViewClient(
-                                        
+
                                         onPageStarted = { url ->
                                             urlInput = url
                                             viewModel.updateCurrentTabUrl(url)
@@ -172,9 +172,9 @@ fun BrowserScreen(
 
         // Dialogs
         if (showBookmarksDialog) {
-            SimpleListDialog("Bookmarks", bookmarks.map { it.title to it.url }, 
+            SimpleListDialog("Bookmarks", bookmarks.map { it.title to it.url },
                 onDismiss = { showBookmarksDialog = false },
-                onSelect = { url -> 
+                onSelect = { url ->
                     viewModel.updateCurrentTabUrl(url)
                     webViewRef?.loadUrl(url)
                     showBookmarksDialog = false
@@ -184,9 +184,9 @@ fun BrowserScreen(
         }
 
         if (showHistoryDialog) {
-            SimpleListDialog("History", history.map { it.title to it.url }, 
+            SimpleListDialog("History", history.map { it.title to it.url },
                 onDismiss = { showHistoryDialog = false },
-                onSelect = { url -> 
+                onSelect = { url ->
                     viewModel.updateCurrentTabUrl(url)
                     webViewRef?.loadUrl(url)
                     showHistoryDialog = false
@@ -212,14 +212,14 @@ fun BrowserHomePage(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "G O O G L E", 
-            fontSize = 42.sp, 
-            color = Color.White, 
+            text = "G O O G L E",
+            fontSize = 42.sp,
+            color = Color.White,
             fontWeight = FontWeight.Bold,
             letterSpacing = 4.sp
         )
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         OutlinedTextField(
             value = urlInput,
             onValueChange = onUrlInputChange,
@@ -243,11 +243,11 @@ fun BrowserHomePage(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
             keyboardActions = KeyboardActions(onGo = { onSearch(urlInput) })
         )
-        
+
         Spacer(modifier = Modifier.height(48.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(), 
-            horizontalArrangement = Arrangement.SpaceBetween, 
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Recent History", style = MaterialTheme.typography.titleMedium, color = Color.White)
@@ -347,9 +347,9 @@ fun TabsScreen(
 
 @Composable
 fun SimpleListDialog(
-    title: String, 
-    items: List<Pair<String, String>>, 
-    onDismiss: () -> Unit, 
+    title: String,
+    items: List<Pair<String, String>>,
+    onDismiss: () -> Unit,
     onSelect: (String) -> Unit,
     onClear: (() -> Unit)?
 ) {
