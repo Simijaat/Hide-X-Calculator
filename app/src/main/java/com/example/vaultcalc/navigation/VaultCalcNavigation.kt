@@ -53,26 +53,11 @@ fun VaultCalcNavigation(
                 onNavigateToDownloads = {
                     navController.navigate("downloads")
                 },
-                onNavigateToNotes = {
-                    navController.navigate("notes")
-                },
                 onNavigateToPhotos = {
                     navController.navigate("photos")
                 },
                 onNavigateToVideos = {
                     navController.navigate("videos")
-                },
-                onNavigateToDocuments = {
-                    navController.navigate("documents")
-                },
-                onNavigateToAudio = {
-                    navController.navigate("audio")
-                },
-                onNavigateToContacts = {
-                    navController.navigate("contacts")
-                },
-                onNavigateToFileManager = {
-                    navController.navigate("filemanager")
                 },
                 onNavigateToSettings = {
                     navController.navigate("settings")
@@ -114,26 +99,11 @@ fun VaultCalcNavigation(
                 }
             )
         }
-        composable("notes") {
-            com.example.vaultcalc.ui.notes.NotesScreen(onNavigateBack = { navController.popBackStack() })
-        }
         composable("photos") {
             PlaceholderScreen("Photos", onNavigateBack = { navController.popBackStack() })
         }
         composable("videos") {
             PlaceholderScreen("Videos", onNavigateBack = { navController.popBackStack() })
-        }
-        composable("documents") {
-            PlaceholderScreen("Documents", onNavigateBack = { navController.popBackStack() })
-        }
-        composable("audio") {
-            PlaceholderScreen("Audio", onNavigateBack = { navController.popBackStack() })
-        }
-        composable("contacts") {
-            PlaceholderScreen("Contacts", onNavigateBack = { navController.popBackStack() })
-        }
-        composable("filemanager") {
-            PlaceholderScreen("File Manager", onNavigateBack = { navController.popBackStack() })
         }
         composable("settings") {
             com.example.vaultcalc.ui.settings.SettingsScreen(onNavigateBack = { navController.popBackStack() })

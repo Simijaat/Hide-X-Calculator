@@ -2,7 +2,6 @@ package com.example.vaultcalc.ui.browser
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.vaultcalc.data.browser.AdBlockManager
 import com.example.vaultcalc.data.browser.BrowserRepository
 import com.example.vaultcalc.data.browser.BrowserTab
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,8 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BrowserViewModel @Inject constructor(
-    private val browserRepository: BrowserRepository,
-    private val adBlockManager: AdBlockManager
+    private val browserRepository: BrowserRepository
 ) : ViewModel() {
 
     private val _tabs = MutableStateFlow<List<BrowserTab>>(emptyList())
@@ -27,17 +25,11 @@ class BrowserViewModel @Inject constructor(
     private val _activeTabId = MutableStateFlow<String?>(null)
     val activeTabId: StateFlow<String?> = _activeTabId.asStateFlow()
 
-    val isAdBlockingEnabled: Boolean
-        get() = adBlockManager.isEnabled
-
     val bookmarks = browserRepository.getBookmarks()
     val history = browserRepository.getHistory()
     val recentSearchHistory = browserRepository.getHistory().map { list -> list.take(10) }
 
     init {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            adBlockManager.loadRules()
-        }
         addNewTab("")
     }
 
@@ -86,10 +78,6 @@ class BrowserViewModel @Inject constructor(
                 if (it.id == activeId) it.copy(progress = progress, isLoading = progress < 100) else it
             }
         }
-    }
-
-    fun toggleAdBlocking() {
-        adBlockManager.setEnabled(!adBlockManager.isEnabled)
     }
 
     fun addBookmark(url: String, title: String) {

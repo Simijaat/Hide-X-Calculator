@@ -2,7 +2,6 @@ package com.example.vaultcalc.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.vaultcalc.data.browser.AdBlockManager
 import com.example.vaultcalc.data.browser.BrowserDao
 import com.example.vaultcalc.data.browser.BrowserDatabase
 import com.example.vaultcalc.data.browser.BrowserRepository
@@ -49,12 +48,6 @@ object AppModule {
     @Singleton
     fun provideBrowserRepository(browserDao: BrowserDao): BrowserRepository {
         return BrowserRepository(browserDao)
-    }
-
-    @Provides
-    @Singleton
-    fun provideAdBlockManager(@ApplicationContext context: Context): AdBlockManager {
-        return AdBlockManager(context)
     }
 
     @Provides

@@ -7,11 +7,9 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.example.vaultcalc.data.browser.AdBlockManager
 import java.io.ByteArrayInputStream
 
 class SecureWebViewClient(
-    private val adBlockManager: AdBlockManager,
     private val onPageStarted: (String) -> Unit,
     private val onPageFinished: (String, String?) -> Unit,
     private val onError: (String) -> Unit
@@ -34,11 +32,6 @@ class SecureWebViewClient(
     ): WebResourceResponse? {
         val url = request?.url?.toString() ?: return null
         val currentUrl = view?.url ?: ""
-
-        if (adBlockManager.isAd(url, currentUrl)) {
-            val emptyStream = ByteArrayInputStream(ByteArray(0))
-            return WebResourceResponse("text/plain", "UTF-8", emptyStream)
-        }
 
         return super.shouldInterceptRequest(view, request)
     }

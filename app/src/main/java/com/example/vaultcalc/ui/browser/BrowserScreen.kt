@@ -120,10 +120,10 @@ fun BrowserScreen(
                                         mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                                     }
 
-                                    val adBlockManager = com.example.vaultcalc.di.BrowserEntryPointAccessor.getAdBlockManager(ctx)
+                                    
 
                                     webViewClient = SecureWebViewClient(
-                                        adBlockManager = adBlockManager,
+                                        
                                         onPageStarted = { url ->
                                             urlInput = url
                                             viewModel.updateCurrentTabUrl(url)

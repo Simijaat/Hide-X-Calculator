@@ -48,13 +48,8 @@ fun VaultScreen(
     onNavigateBack: () -> Unit,
     onNavigateToBrowser: () -> Unit,
     onNavigateToDownloads: () -> Unit,
-    onNavigateToNotes: () -> Unit,
     onNavigateToPhotos: () -> Unit,
     onNavigateToVideos: () -> Unit,
-    onNavigateToDocuments: () -> Unit,
-    onNavigateToAudio: () -> Unit,
-    onNavigateToContacts: () -> Unit,
-    onNavigateToFileManager: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
     Scaffold(
@@ -76,15 +71,10 @@ fun VaultScreen(
     ) { padding ->
 
         val apps = listOf(
-            VaultApp("Browser", Icons.Default.Search, Color(0xFF1E88E5), onNavigateToBrowser),
-            VaultApp("Downloads", Icons.Default.KeyboardArrowDown, Color(0xFF8E24AA), onNavigateToDownloads),
-            VaultApp("Notes", Icons.Default.Edit, Color(0xFFFBC02D), onNavigateToNotes),
             VaultApp("Photos", Icons.Default.AccountBox, Color(0xFFE53935), onNavigateToPhotos),
             VaultApp("Videos", Icons.Default.PlayArrow, Color(0xFF3949AB), onNavigateToVideos),
-            VaultApp("Documents", Icons.Default.List, Color(0xFF00ACC1), onNavigateToDocuments),
-            VaultApp("Audio", Icons.Default.Notifications, Color(0xFFFF7043), onNavigateToAudio),
-            VaultApp("Contacts", Icons.Default.Person, Color(0xFF4DD0E1), onNavigateToContacts),
-            VaultApp("Files", Icons.Default.Folder, Color(0xFFFFB300), onNavigateToFileManager),
+            VaultApp("Browser", Icons.Default.Search, Color(0xFF1E88E5), onNavigateToBrowser),
+            VaultApp("Downloads", Icons.Default.KeyboardArrowDown, Color(0xFF8E24AA), onNavigateToDownloads),
             VaultApp("Settings", Icons.Default.Settings, Color(0xFF9E9E9E), onNavigateToSettings)
         )
 
