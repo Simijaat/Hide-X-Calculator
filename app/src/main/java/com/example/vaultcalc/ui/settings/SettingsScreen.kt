@@ -38,7 +38,7 @@ fun SettingsScreen(
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
-            Text("Update PIN", style = MaterialTheme.typography.titleMedium)
+            Text("Update PIN (exactly 4 digits)", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(
                 value = newPin,
                 onValueChange = { newPin = it },
@@ -56,7 +56,7 @@ fun SettingsScreen(
                 },
                 modifier = Modifier.padding(top = 8.dp)
             ) {
-                Text("Update PIN")
+                Text("Update PIN (exactly 4 digits)")
             }
 
             Spacer(modifier = Modifier.height(32.dp))

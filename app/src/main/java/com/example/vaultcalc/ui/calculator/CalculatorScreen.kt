@@ -18,6 +18,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.Button
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
@@ -37,6 +40,25 @@ fun CalculatorScreen(
     
     val (recoveryAnswer, setRecoveryAnswer) = remember { mutableStateOf("") }
     val (newPin, setNewPin) = remember { mutableStateOf("") }
+
+    val documentTreeLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        viewModel.onDirectorySelected(uri)
+    }
+
+    if (state.requiresDirectorySelection) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Vault Setup") },
+            text = { Text("Please select a secure folder on your device to store and hide your vault data. This directory will hold your encrypted files.") },
+            confirmButton = {
+                Button(onClick = { documentTreeLauncher.launch(null) }) {
+                    Text("Select Folder")
+                }
+            }
+        )
+    }
 
     if (state.isRecovering) {
         AlertDialog(
@@ -72,7 +94,7 @@ fun CalculatorScreen(
             title = { Text("Set New PIN") },
             text = {
                 Column {
-                    Text("Enter a new PIN (min 4 digits)")
+                    Text("Enter a new PIN (exactly 4 digits)")
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = newPin,

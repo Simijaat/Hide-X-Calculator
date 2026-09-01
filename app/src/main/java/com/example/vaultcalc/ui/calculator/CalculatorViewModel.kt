@@ -3,6 +3,7 @@ package com.example.vaultcalc.ui.calculator
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vaultcalc.data.security.VaultSecurityManager
+import com.example.vaultcalc.data.crypto.VaultStorageManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,7 @@ class CalculatorViewModel @Inject constructor(
     private val securityManager: VaultSecurityManager
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(CalculatorState(isPinSet = securityManager.isPinSet()))
+    private val _state = MutableStateFlow(CalculatorState(isPinSet = securityManager.isPinSet(), requiresDirectorySelection = !VaultStorageManager.hasConfig()))
     val state: StateFlow<CalculatorState> = _state.asStateFlow()
 
     private var currentInput = ""
@@ -26,7 +27,7 @@ class CalculatorViewModel @Inject constructor(
     init {
         // Initialize state
         _state.value = _state.value.copy(
-            isPinSet = securityManager.isPinSet(),
+            isPinSet = securityManager.isPinSet(), requiresDirectorySelection = !VaultStorageManager.hasConfig(),
             isConfirmingPin = false
         )
     }
@@ -57,6 +58,16 @@ class CalculatorViewModel @Inject constructor(
         }
     }
 
+    fun onDirectorySelected(uri: android.net.Uri?) {
+        if (uri != null) {
+            // VaultStorageManager.vaultUri = uri
+            _state.value = _state.value.copy(
+                requiresDirectorySelection = false,
+                isPinSet = securityManager.isPinSet()
+            )
+        }
+    }
+
     fun cancelRecovery() {
         _state.value = _state.value.copy(
             isRecovering = false,
@@ -67,6 +78,8 @@ class CalculatorViewModel @Inject constructor(
     }
 
     fun onAction(action: CalculatorAction) {
+        if (_state.value.requiresDirectorySelection) return
+
         when (action) {
             is CalculatorAction.ButtonPress -> {
                 handleInput(action.symbol)
@@ -296,7 +309,8 @@ data class CalculatorState(
     val isConfirmingPin: Boolean = false,
     val isRecovering: Boolean = false,
     val recoveryQuestion: String = "",
-    val isSettingNewPin: Boolean = false
+    val isSettingNewPin: Boolean = false,
+    val requiresDirectorySelection: Boolean = false
 )
 
 sealed class CalculatorAction {
