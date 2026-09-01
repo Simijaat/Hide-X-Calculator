@@ -10,6 +10,14 @@ import javax.inject.Inject
 
 class HtmlMetadataStrategy @Inject constructor() : ResolverStrategy {
 
+    companion object {
+        private val ogVideoRegex = Regex("<meta\\s+property=\"og:video:url\"\\s+content=\"([^\"]+)\"")
+        private val ogVideoAltRegex = Regex("<meta\\s+property=\"og:video\"\\s+content=\"([^\"]+)\"")
+        private val twitterPlayerStream = Regex("<meta\\s+name=\"twitter:player:stream\"\\s+content=\"([^\"]+)\"")
+        private val titleRegex = Regex("<title>([^<]+)</title>")
+        private val mediaRegexes = listOf(ogVideoRegex, ogVideoAltRegex, twitterPlayerStream)
+    }
+
     override suspend fun resolve(url: String): List<DownloadOption> = withContext(Dispatchers.IO) {
         val options = mutableListOf<DownloadOption>()
         try {
@@ -31,10 +39,6 @@ class HtmlMetadataStrategy @Inject constructor() : ResolverStrategy {
                 var linesRead = 0
                 val maxLines = 1000
 
-                val ogVideoRegex = Regex("<meta\\s+property=\"og:video:url\"\\s+content=\"([^\"]+)\"")
-                val ogVideoAltRegex = Regex("<meta\\s+property=\"og:video\"\\s+content=\"([^\"]+)\"")
-                val twitterPlayerStream = Regex("<meta\\s+name=\"twitter:player:stream\"\\s+content=\"([^\"]+)\"")
-                val titleRegex = Regex("<title>([^<]+)</title>")
 
                 var title = "Extracted Media"
 
@@ -43,7 +47,7 @@ class HtmlMetadataStrategy @Inject constructor() : ResolverStrategy {
 
                     titleRegex.find(l)?.let { title = it.groupValues[1] }
 
-                    listOf(ogVideoRegex, ogVideoAltRegex, twitterPlayerStream).forEach { regex ->
+                    mediaRegexes.forEach { regex ->
                         regex.find(l)?.let { match ->
                             val mediaUrl = match.groupValues[1].replace("&amp;", "&")
                             options.add(
