@@ -9,7 +9,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val securityManager: VaultSecurityManager
 ) : ViewModel() {
-    
+
     val currentQuestion = securityManager.getSecurityQuestion()
 
     fun updatePin(newPin: String): Boolean {

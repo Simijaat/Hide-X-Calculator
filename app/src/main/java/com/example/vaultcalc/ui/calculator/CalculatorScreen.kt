@@ -37,7 +37,7 @@ fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    
+
     val (recoveryAnswer, setRecoveryAnswer) = remember { mutableStateOf("") }
     val (newPin, setNewPin) = remember { mutableStateOf("") }
 

@@ -14,10 +14,11 @@ import java.text.DecimalFormat
 
 @HiltViewModel
 class CalculatorViewModel @Inject constructor(
-    private val securityManager: VaultSecurityManager
+    private val securityManager: VaultSecurityManager,
+    private val vaultStorageManager: com.example.vaultcalc.data.crypto.VaultStorageManager
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(CalculatorState(isPinSet = securityManager.isPinSet(), requiresDirectorySelection = !VaultStorageManager.hasConfig()))
+    private val _state = MutableStateFlow(CalculatorState(isPinSet = securityManager.isPinSet(), requiresDirectorySelection = !vaultStorageManager.hasDirectorySelected()))
     val state: StateFlow<CalculatorState> = _state.asStateFlow()
 
     private var currentInput = ""
@@ -27,7 +28,7 @@ class CalculatorViewModel @Inject constructor(
     init {
         // Initialize state
         _state.value = _state.value.copy(
-            isPinSet = securityManager.isPinSet(), requiresDirectorySelection = !VaultStorageManager.hasConfig(),
+            isPinSet = securityManager.isPinSet(), requiresDirectorySelection = !vaultStorageManager.hasDirectorySelected(),
             isConfirmingPin = false
         )
     }
@@ -60,7 +61,7 @@ class CalculatorViewModel @Inject constructor(
 
     fun onDirectorySelected(uri: android.net.Uri?) {
         if (uri != null) {
-            // VaultStorageManager.vaultUri = uri
+            vaultStorageManager.vaultUri = uri
             _state.value = _state.value.copy(
                 requiresDirectorySelection = false,
                 isPinSet = securityManager.isPinSet()
@@ -135,7 +136,7 @@ class CalculatorViewModel @Inject constructor(
                         return
                     }
                 }
-                
+
                 if (!securityManager.isPinSet() && currentInput.length == 4 && currentInput.all { it.isDigit() }) {
                     if (setupPin == null) {
                         setupPin = currentInput
