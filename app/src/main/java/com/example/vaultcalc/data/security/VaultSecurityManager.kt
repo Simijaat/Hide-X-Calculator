@@ -22,7 +22,8 @@ import javax.inject.Singleton
 
 @Singleton
 class VaultSecurityManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val vaultStorageManager: com.example.vaultcalc.data.crypto.VaultStorageManager
 ) {
     private val PREF_NAME = "secure_vault_prefs"
     private val KEY_PIN_HASH = "vault_pin_hash"
@@ -55,7 +56,7 @@ class VaultSecurityManager @Inject constructor(
         private set
 
     fun isPinSet(): Boolean {
-        return VaultStorageManager.hasConfig() || (sharedPreferences.contains(KEY_PIN_HASH) && sharedPreferences.contains(KEY_PIN_SALT))
+        return vaultStorageManager.hasConfig() || (sharedPreferences.contains(KEY_PIN_HASH) && sharedPreferences.contains(KEY_PIN_SALT))
     }
 
     fun setPinAndRecovery(pin: String, question: String, answer: String) {
@@ -72,7 +73,7 @@ class VaultSecurityManager @Inject constructor(
 
         val pinHash = hashPin(pin, pinSalt)
 
-        VaultStorageManager.saveConfig(
+        vaultStorageManager.saveConfig(
             pinSalt = pinSalt,
             recoverySalt = recoverySalt,
             encryptedMasterKeyWithPin = encryptedMasterKeyWithPin,
@@ -93,7 +94,7 @@ class VaultSecurityManager @Inject constructor(
     }
 
     fun verifyPin(pin: String): Boolean {
-        if (!VaultStorageManager.hasConfig() && sharedPreferences.contains(KEY_PIN_HASH)) {
+        if (!vaultStorageManager.hasConfig() && sharedPreferences.contains(KEY_PIN_HASH)) {
             // Migrate old format to new format
             val storedSalt64 = sharedPreferences.getString(KEY_PIN_SALT, null) ?: return false
             val storedHash64 = sharedPreferences.getString(KEY_PIN_HASH, null) ?: return false
@@ -114,7 +115,7 @@ class VaultSecurityManager @Inject constructor(
             return false
         }
 
-        val config = VaultStorageManager.loadConfig() ?: return false
+        val config = vaultStorageManager.loadConfig() ?: return false
         val computedHash = hashPin(pin, config.pinSalt)
         val isValid = MessageDigest.isEqual(config.pinHash, computedHash)
 
@@ -133,11 +134,11 @@ class VaultSecurityManager @Inject constructor(
     }
 
     fun getSecurityQuestion(): String? {
-        return VaultStorageManager.loadConfig()?.securityQuestion
+        return vaultStorageManager.loadConfig()?.securityQuestion
     }
 
     fun verifyRecoveryAnswer(answer: String): Boolean {
-        val config = VaultStorageManager.loadConfig() ?: return false
+        val config = vaultStorageManager.loadConfig() ?: return false
         try {
             val derivedKey = VaultCryptoManager.deriveKey(answer.trim().lowercase(), config.recoverySalt)
             activeMasterKey = VaultCryptoManager.decryptMasterKey(config.encryptedMasterKeyWithRecovery, config.recoveryIv, derivedKey)
@@ -149,7 +150,7 @@ class VaultSecurityManager @Inject constructor(
     }
 
     fun changePinWithRecovery(newPin: String): Boolean {
-        val config = VaultStorageManager.loadConfig() ?: return false
+        val config = vaultStorageManager.loadConfig() ?: return false
         if (activeMasterKey == null) return false
         // We preserve the existing recovery answer/question, re-derive with new pin.
         val pinSalt = VaultCryptoManager.generateRandomSalt()
@@ -157,7 +158,7 @@ class VaultSecurityManager @Inject constructor(
         val (encryptedMasterKeyWithPin, pinIv) = VaultCryptoManager.encryptMasterKey(activeMasterKey!!, pinDerivedKey)
         val pinHash = hashPin(newPin, pinSalt)
 
-        VaultStorageManager.saveConfig(
+        vaultStorageManager.saveConfig(
             pinSalt = pinSalt,
             recoverySalt = config.recoverySalt,
             encryptedMasterKeyWithPin = encryptedMasterKeyWithPin,
@@ -171,14 +172,14 @@ class VaultSecurityManager @Inject constructor(
     }
 
     fun changeSecurityQuestion(newQuestion: String, newAnswer: String): Boolean {
-        val config = VaultStorageManager.loadConfig() ?: return false
+        val config = vaultStorageManager.loadConfig() ?: return false
         if (activeMasterKey == null) return false
 
         val recoverySalt = VaultCryptoManager.generateRandomSalt()
         val recoveryDerivedKey = VaultCryptoManager.deriveKey(newAnswer.trim().lowercase(), recoverySalt)
         val (encryptedMasterKeyWithRecovery, recoveryIv) = VaultCryptoManager.encryptMasterKey(activeMasterKey!!, recoveryDerivedKey)
 
-        VaultStorageManager.saveConfig(
+        vaultStorageManager.saveConfig(
             pinSalt = config.pinSalt,
             recoverySalt = recoverySalt,
             encryptedMasterKeyWithPin = config.encryptedMasterKeyWithPin,

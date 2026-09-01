@@ -1,28 +1,60 @@
 package com.example.vaultcalc.data.crypto
 
-import android.os.Environment
-import org.json.JSONObject
-import java.io.File
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Base64
+import androidx.documentfile.provider.DocumentFile
+import dagger.hilt.android.qualifiers.ApplicationContext
+import org.json.JSONObject
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object VaultStorageManager {
-    private val vaultDir: File by lazy {
-        val docs = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-        val dir = File(docs, ".VaultCalc")
-        if (!dir.exists()) dir.mkdirs()
-        dir
+@Singleton
+class VaultStorageManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    private val prefs = context.getSharedPreferences("vault_storage_prefs", Context.MODE_PRIVATE)
+
+    var vaultUri: Uri?
+        get() {
+            val uriString = prefs.getString("vault_uri", null)
+            return if (uriString != null) Uri.parse(uriString) else null
+        }
+        set(value) {
+            prefs.edit().putString("vault_uri", value?.toString()).apply()
+            value?.let { uri ->
+                try {
+                    val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+
+                    val dir = DocumentFile.fromTreeUri(context, uri)
+                    if (dir != null && dir.findFile(".nomedia") == null) {
+                        dir.createFile("*/*", ".nomedia")
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
+    fun hasDirectorySelected(): Boolean = vaultUri != null
+
+    private fun getConfigFile(): DocumentFile? {
+        val uri = vaultUri ?: return null
+        val dir = DocumentFile.fromTreeUri(context, uri) ?: return null
+        var file = dir.findFile("config.vdata")
+        if (file == null) {
+            file = dir.createFile("application/octet-stream", "config.vdata")
+        }
+        return file
     }
 
-    private val configFile: File
-        get() = File(vaultDir, "config.json")
-
-    fun getNotesDir(): File {
-        val dir = File(vaultDir, "Notes")
-        if (!dir.exists()) dir.mkdirs()
-        return dir
+    fun hasConfig(): Boolean {
+        val uri = vaultUri ?: return false
+        val dir = DocumentFile.fromTreeUri(context, uri) ?: return false
+        return dir.findFile("config.vdata") != null
     }
-
-    fun hasConfig(): Boolean = configFile.exists()
 
     fun saveConfig(
         pinSalt: ByteArray,
@@ -32,7 +64,7 @@ object VaultStorageManager {
         encryptedMasterKeyWithRecovery: ByteArray,
         recoveryIv: ByteArray,
         securityQuestion: String,
-        pinHash: ByteArray // Added for quick pin verification without full master key decryption (same as before)
+        pinHash: ByteArray
     ) {
         val json = JSONObject().apply {
             put("pinSalt", Base64.encodeToString(pinSalt, Base64.NO_WRAP))
@@ -44,13 +76,30 @@ object VaultStorageManager {
             put("securityQuestion", securityQuestion)
             put("pinHash", Base64.encodeToString(pinHash, Base64.NO_WRAP))
         }
-        configFile.writeText(json.toString())
+
+        val file = getConfigFile() ?: return
+        try {
+            context.contentResolver.openOutputStream(file.uri, "wt")?.use { stream ->
+                val obfuscated = Base64.encodeToString(json.toString().toByteArray(), Base64.NO_WRAP)
+                stream.write(obfuscated.toByteArray())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun loadConfig(): VaultConfig? {
-        if (!configFile.exists()) return null
+        val uri = vaultUri ?: return null
+        val dir = DocumentFile.fromTreeUri(context, uri) ?: return null
+        val file = dir.findFile("config.vdata") ?: return null
+
         return try {
-            val json = JSONObject(configFile.readText())
+            val content = context.contentResolver.openInputStream(file.uri)?.use { stream ->
+                stream.bufferedReader().readText()
+            } ?: return null
+
+            val decodedJson = String(Base64.decode(content, Base64.NO_WRAP))
+            val json = JSONObject(decodedJson)
             VaultConfig(
                 pinSalt = Base64.decode(json.getString("pinSalt"), Base64.NO_WRAP),
                 recoverySalt = Base64.decode(json.getString("recoverySalt"), Base64.NO_WRAP),
@@ -64,6 +113,42 @@ object VaultStorageManager {
         } catch (e: Exception) {
             null
         }
+    }
+
+    fun writeDataToFile(fileName: String, data: ByteArray) {
+        val uri = vaultUri ?: return
+        val dir = DocumentFile.fromTreeUri(context, uri) ?: return
+        var file = dir.findFile(fileName)
+        if (file == null) {
+            file = dir.createFile("application/octet-stream", fileName)
+        }
+        if (file == null) return
+        try {
+            context.contentResolver.openOutputStream(file.uri, "wt")?.use { stream ->
+                stream.write(data)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun readDataFromFile(fileName: String): ByteArray? {
+        val uri = vaultUri ?: return null
+        val dir = DocumentFile.fromTreeUri(context, uri) ?: return null
+        val file = dir.findFile(fileName) ?: return null
+        return try {
+            context.contentResolver.openInputStream(file.uri)?.use { stream ->
+                stream.readBytes()
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun fileExists(fileName: String): Boolean {
+        val uri = vaultUri ?: return false
+        val dir = DocumentFile.fromTreeUri(context, uri) ?: return false
+        return dir.findFile(fileName) != null
     }
 }
 

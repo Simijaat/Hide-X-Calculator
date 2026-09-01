@@ -25,12 +25,12 @@ class BrowserViewModel @Inject constructor(
     private val _activeTabId = MutableStateFlow<String?>(null)
     val activeTabId: StateFlow<String?> = _activeTabId.asStateFlow()
 
-    val bookmarks = browserRepository.getBookmarks()
+val bookmarks = browserRepository.getBookmarks()
     val history = browserRepository.getHistory()
     val recentSearchHistory = browserRepository.getHistory().map { list -> list.take(10) }
 
     init {
-        addNewTab("")
+addNewTab("")
     }
 
     fun addNewTab(url: String = "https://duckduckgo.com") {
@@ -80,7 +80,7 @@ class BrowserViewModel @Inject constructor(
         }
     }
 
-    fun addBookmark(url: String, title: String) {
+fun addBookmark(url: String, title: String) {
         viewModelScope.launch {
             browserRepository.addBookmark(url, title)
         }

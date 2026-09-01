@@ -9,6 +9,7 @@ import com.example.vaultcalc.data.download.DownloadDao
 import com.example.vaultcalc.data.download.DownloadDatabase
 import com.example.vaultcalc.data.download.DownloadRepository
 import com.example.vaultcalc.data.security.VaultSecurityManager
+import com.example.vaultcalc.data.crypto.VaultStorageManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,10 +23,17 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideVaultStorageManager(@ApplicationContext context: Context): VaultStorageManager {
+        return VaultStorageManager(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideVaultSecurityManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        vaultStorageManager: VaultStorageManager
     ): VaultSecurityManager {
-        return VaultSecurityManager(context)
+        return VaultSecurityManager(context, vaultStorageManager)
     }
 
     @Provides
