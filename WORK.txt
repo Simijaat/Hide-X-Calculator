@@ -406,16 +406,3 @@
 ## Validation Performed
 - Ran `./gradlew clean test lint check` successfully without regression.
 - Ran `./gradlew clean assembleDebug` to ensure all UI elements render correctly and there are no regressions in compilation or code quality.
-
-
-# PR16 - Ultimate Browser Edition and Video Downloader
-
-## What was implemented
-- **Setup YoutubeDL**: Added `io.github.junkfood02.youtubedl-android` to `build.gradle.kts` and initialized it in `VaultCalcApplication.kt`.
-- **Resolver**: Created `YoutubeDLResolver` to fetch available video qualities from URLs.
-- **Browser UI**: Added a Sleek Bottom Navigation Bar replacing old top controls. Added a Floating Action Button for triggering downloads when media is available. Added a Bottom Sheet to display quality selection.
-- **Downloads**: Connected the fetched resolved option directly to `DownloadManager.enqueueDownload()`, making it work natively with the background `SecureDownloadService`.
-
-## Validation Performed
-- Validated compilation manually via `./gradlew assembleDebug` successfully.
-- Cleaned syntax manually avoiding Compose Context errors using string manipulation correctly.
