@@ -54,6 +54,7 @@ fun BrowserScreen(
     var showBookmarksDialog by remember { mutableStateOf(false) }
     var showHistoryDialog by remember { mutableStateOf(false) }
     var showTabsScreen by remember { mutableStateOf(false) }
+    var showMoreMenu by remember { mutableStateOf(false) }
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
@@ -106,37 +107,6 @@ fun BrowserScreen(
                     }
                 }
             },
-            bottomBar = {
-                BottomAppBar(
-                    containerColor = Color(0xFF1E1E1E),
-                    contentColor = Color.White
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = { webViewRef?.goBack() }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                        }
-                        IconButton(onClick = { webViewRef?.goForward() }) {
-                            Icon(Icons.Default.ArrowForward, contentDescription = "Forward")
-                        }
-                        IconButton(onClick = { webViewRef?.reload() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Reload")
-                        }
-                        IconButton(onClick = { showBookmarksDialog = true }) {
-                            Icon(Icons.Default.Bookmark, contentDescription = "Bookmarks")
-                        }
-                        IconButton(onClick = { showHistoryDialog = true }) {
-                            Icon(Icons.Default.History, contentDescription = "History")
-                        }
-                        IconButton(onClick = { onNavigateToDownloads(null) }) {
-                            Icon(Icons.Default.Download, contentDescription = "Downloads")
-                        }
-                    }
-                }
-            }
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -171,14 +141,8 @@ fun BrowserScreen(
                         IconButton(onClick = onNavigateBack) { // Interpret as minimize
                             Icon(Icons.Default.ArrowDropDown, contentDescription = "Minimize", tint = Color.White)
                         }
-                        IconButton(
-                            onClick = {
-                                if (webViewRef?.canGoForward() == true) {
-                                    webViewRef?.goForward()
-                                }
-                            }
-                        ) {
-                            Icon(Icons.Default.ArrowForwardIos, contentDescription = "Forward", tint = Color.White)
+                        IconButton(onClick = { webViewRef?.goBack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                         }
 
                         OutlinedTextField(
@@ -238,6 +202,43 @@ fun BrowserScreen(
                                     color = Color.White,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Box {
+                            IconButton(onClick = { showMoreMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.White)
+                            }
+                            DropdownMenu(
+                                expanded = showMoreMenu,
+                                onDismissRequest = { showMoreMenu = false },
+                                modifier = Modifier.background(Color(0xFF2C2C2C))
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Forward", color = Color.White) },
+                                    leadingIcon = { Icon(Icons.Default.ArrowForward, contentDescription = null, tint = Color.White) },
+                                    onClick = { webViewRef?.goForward(); showMoreMenu = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Reload", color = Color.White) },
+                                    leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White) },
+                                    onClick = { webViewRef?.reload(); showMoreMenu = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Bookmarks", color = Color.White) },
+                                    leadingIcon = { Icon(Icons.Default.Bookmark, contentDescription = null, tint = Color.White) },
+                                    onClick = { showBookmarksDialog = true; showMoreMenu = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("History", color = Color.White) },
+                                    leadingIcon = { Icon(Icons.Default.History, contentDescription = null, tint = Color.White) },
+                                    onClick = { showHistoryDialog = true; showMoreMenu = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Downloads", color = Color.White) },
+                                    leadingIcon = { Icon(Icons.Default.Download, contentDescription = null, tint = Color.White) },
+                                    onClick = { onNavigateToDownloads(null); showMoreMenu = false }
                                 )
                             }
                         }
