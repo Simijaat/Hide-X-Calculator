@@ -1,5 +1,9 @@
 package com.example.vaultcalc.ui.browser
 
+
+import com.example.vaultcalc.R
+
+
 import androidx.activity.compose.BackHandler
 import android.annotation.SuppressLint
 import android.webkit.WebSettings
@@ -234,7 +238,9 @@ fun BrowserScreen(
                             onUrlInputChange = { urlInput = it },
                             onSearch = { query ->
                                 val finalUrl = formatSearchUrl(query)
-                                viewModel.updateCurrentTabUrl(finalUrl)
+                                if (finalUrl.isNotEmpty()) {
+                                    viewModel.updateCurrentTabUrl(finalUrl)
+                                }
                             },
                             onClearHistory = { viewModel.clearHistory() },
                             onShowTabs = { showTabsScreen = true },
@@ -246,10 +252,11 @@ fun BrowserScreen(
                             update = { webView ->
                                 webViewRef = webView
                                 val currentUrl = webView.url ?: ""
-                                val lastLoadedUrl = webView.getTag(android.R.id.text1) as? String ?: ""
-                                if (activeTab.url.isNotEmpty() && activeTab.url != lastLoadedUrl && activeTab.url != currentUrl) {
-                                    webView.setTag(android.R.id.text1, activeTab.url)
-                                    webView.loadUrl(activeTab.url)
+                                val lastLoadedUrl = webView.getTag(R.id.webview_last_url) as? String ?: ""
+                                val formattedUrl = formatSearchUrl(activeTab.url)
+                                if (formattedUrl.isNotEmpty() && formattedUrl != lastLoadedUrl && formattedUrl != currentUrl) {
+                                    webView.setTag(R.id.webview_last_url, formattedUrl)
+                                    webView.loadUrl(formattedUrl)
                                 }
                             },
                             modifier = Modifier.fillMaxSize(),
@@ -276,7 +283,10 @@ fun BrowserScreen(
                                         onPageStarted = { url ->
                                             if (url != "about:blank") {
                                                 urlInput = url
-                                                viewModel.updateCurrentTabUrl(url)
+                                                // Only update URL in ViewModel if it changed, to avoid re-triggering update logic and causing infinite loops
+                                                if (activeTab.url != url) {
+                                                    viewModel.updateCurrentTabUrl(url)
+                                                }
                                             }
                                             errorMessage = null
                                         },
@@ -308,8 +318,9 @@ fun BrowserScreen(
                                     }
 
                                     // Ensure web view tag matches loaded URL initially
-                                    setTag(android.R.id.text1, activeTab.url)
-                                    loadUrl(activeTab.url)
+                                    val initUrl = formatSearchUrl(activeTab.url)
+                                    setTag(R.id.webview_last_url, initUrl)
+                                    loadUrl(initUrl)
                                 }
                             }
                         )
