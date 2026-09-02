@@ -13,10 +13,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
+import com.example.vaultcalc.download.engine.DownloadManager
+import com.example.vaultcalc.download.resolver.DownloadOption
+
 
 @HiltViewModel
 class BrowserViewModel @Inject constructor(
-    private val browserRepository: BrowserRepository
+    private val browserRepository: BrowserRepository,
+    private val downloadManager: DownloadManager
 ) : ViewModel() {
 
     private val _tabs = MutableStateFlow<List<BrowserTab>>(emptyList())
@@ -95,6 +99,13 @@ fun addBookmark(url: String, title: String) {
     fun addHistory(url: String, title: String) {
         viewModelScope.launch {
             browserRepository.addHistoryItem(url, title)
+        }
+    }
+
+
+    fun enqueueDownload(option: DownloadOption, originalUrl: String) {
+        viewModelScope.launch {
+            downloadManager.enqueueDownload(option, originalUrl)
         }
     }
 
