@@ -10,11 +10,6 @@ android {
     compileSdk = 34
 
     defaultConfig {
-
-        ndk {
-            abiFilters.addAll(arrayOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
-        }
-
         applicationId = "com.example.vaultcalc"
         minSdk = 26
         targetSdk = 34
@@ -54,11 +49,6 @@ android {
 }
 
 dependencies {
-
-    // YouTubeDL
-    implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
-    implementation("io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1")
-
     // Room for Browser Data
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

@@ -1,9 +1,15 @@
 package com.example.vaultcalc.ui.browser
 
+
+import com.example.vaultcalc.R
+
+
+import androidx.activity.compose.BackHandler
 import android.annotation.SuppressLint
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,8 +23,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.ui.viewinterop.AndroidView
-
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,15 +31,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.vaultcalc.data.browser.BrowserTab
-import com.example.vaultcalc.data.browser.HistoryItem
-import com.example.vaultcalc.download.resolver.DownloadOption
-import com.example.vaultcalc.download.resolver.YoutubeDLResolver
 import com.example.vaultcalc.ui.theme.AppBlack
-import kotlinx.coroutines.launch
+import com.example.vaultcalc.data.browser.BrowserTab
 
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,10 +54,12 @@ fun BrowserScreen(
     var urlInput by remember(activeTab?.url) { mutableStateOf(activeTab?.url ?: "") }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     
+
     var showMenu by remember { mutableStateOf(false) }
     var showTabsScreen by remember { mutableStateOf(false) }
     var showBookmarksDialog by remember { mutableStateOf(false) }
     var showHistoryDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val bookmarks by viewModel.bookmarks.collectAsState(initial = emptyList())
     val history by viewModel.history.collectAsState(initial = emptyList())
@@ -63,12 +67,8 @@ fun BrowserScreen(
 
     val isBookmarked = bookmarks.any { it.url == activeTab?.url }
 
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-    var showDownloadSheet by remember { mutableStateOf(false) }
-    var downloadOptions by remember { mutableStateOf<List<DownloadOption>>(emptyList()) }
-    var isResolving by remember { mutableStateOf(false) }
 
+    // Handle back button presses to navigate back in WebView history if possible
     BackHandler(enabled = activeTab != null && activeTab.url.isNotEmpty()) {
         if (webViewRef?.canGoBack() == true) {
             webViewRef?.goBack()
@@ -78,6 +78,7 @@ fun BrowserScreen(
         }
     }
 
+    // Full screen Tabs Switcher overlay
     if (showTabsScreen) {
         TabsScreen(
             tabs = tabs,
@@ -100,190 +101,244 @@ fun BrowserScreen(
         containerColor = AppBlack,
         topBar = {
             if (activeTab != null && activeTab.url.isNotEmpty()) {
-                BrowserTopBar(
-                    urlInput = urlInput,
-                    onUrlChange = { urlInput = it },
-                    onSearch = { query ->
-                        urlInput = formatSearchUrl(query)
-                        viewModel.updateCurrentTabUrl(urlInput)
-                        showMenu = false
-                    },
-                    progress = activeTab.progress,
-                    isBookmarked = isBookmarked,
-                    onBookmarkClick = {
-                        if (isBookmarked) viewModel.removeBookmark(activeTab.url)
-                        else viewModel.addBookmark(activeTab.url, activeTab.title)
-                    }
-                )
-            }
-        },
-        bottomBar = {
-            if (activeTab != null && activeTab.url.isNotEmpty()) {
-                NavigationBar(
-                    containerColor = Color(0xFF1E1E1E),
-                    contentColor = Color.White
+                Surface(
+                    color = AppBlack,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = {
-                            if (webViewRef?.canGoBack() == true) {
-                                webViewRef?.goBack()
-                            } else {
-                                viewModel.updateCurrentTabUrl("")
-                                urlInput = ""
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                             }
-                        },
-                        icon = { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
-                    )
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = {
-                            if (webViewRef?.canGoForward() == true) {
-                                webViewRef?.goForward()
-                            }
-                        },
-                        icon = { Icon(Icons.Default.ArrowForward, contentDescription = "Forward") }
-                    )
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = { showTabsScreen = true },
-                        icon = {
+
+                            // Premium pill-shaped address bar
                             Box(
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .border(2.dp, Color.White, RoundedCornerShape(4.dp)),
-                                contentAlignment = Alignment.Center
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(Color(0xFF2C2C2C))
+                                    .clickable { /* Could open a search dialog here, for now just show URL */ }
+                                    .padding(horizontal = 16.dp),
+                                contentAlignment = Alignment.CenterStart
                             ) {
-                                Text(
-                                    text = tabs.size.toString(),
-                                    color = Color.White,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    )
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = { onNavigateToDownloads(null) },
-                        icon = { Icon(Icons.Default.Download, contentDescription = "Downloads") }
-                    )
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = { showMenu = true },
-                        icon = { Icon(Icons.Default.MoreVert, contentDescription = "Menu") }
-                    )
-                }
-            }
-        },
-        floatingActionButton = {
-            if (activeTab != null && activeTab.url.isNotEmpty()) {
-                FloatingActionButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            isResolving = true
-                            downloadOptions = YoutubeDLResolver.resolve(activeTab.url)
-                            isResolving = false
-                            if (downloadOptions.isNotEmpty()) {
-                                showDownloadSheet = true
-                            } else {
-                                Toast.makeText(context, "No download options found", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    shape = CircleShape
-                ) {
-                    if (isResolving) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                    } else {
-                        Icon(Icons.Default.Download, contentDescription = "Download Video", tint = Color.White)
-                    }
-                }
-            }
-        }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (activeTab == null || activeTab.url.isEmpty()) {
-                BrowserHomePage(
-                    recentHistory = recentHistory,
-                    urlInput = urlInput,
-                    onUrlInputChange = { urlInput = it },
-                    onSearch = { query ->
-                        urlInput = formatSearchUrl(query)
-                        viewModel.updateCurrentTabUrl(urlInput)
-                    },
-                    onClearHistory = { viewModel.clearHistory() },
-                    onShowTabs = { showTabsScreen = true },
-                    tabsCount = tabs.size,
-                    onNavigateBack = onNavigateBack
-                )
-            } else {
-                AndroidView(
-                    modifier = Modifier.fillMaxSize(),
-                    factory = { context ->
-                        WebView(context).apply {
-                            settings.apply {
-                                javaScriptEnabled = true
-                                domStorageEnabled = true
-                                mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                            }
-                            webViewClient = com.example.vaultcalc.ui.browser.SecureWebViewClient(
-                                onPageStarted = { url -> viewModel.updateCurrentTabUrl(url) },
-                                onPageFinished = { url, title ->
-                                    viewModel.updateCurrentTabTitle(title ?: "Unknown")
-                                    viewModel.addHistory(url, title ?: "Unknown")
-                                },
-                                onError = { }
-                            )
-                            webChromeClient = object : android.webkit.WebChromeClient() {
-                                override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                                    viewModel.updateCurrentTabProgress(newProgress)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = "Secure",
+                                        tint = Color(0xFF34C759), // iOS green
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = activeTab.url,
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    IconButton(
+                                        onClick = {
+                                            webViewRef?.reload()
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Refresh, contentDescription = "Reload", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    }
                                 }
                             }
-                            webViewRef = this
-                            loadUrl(activeTab.url)
+
+                            IconButton(onClick = { showTabsScreen = true }) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .border(2.dp, Color.White, RoundedCornerShape(4.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = tabs.size.toString(),
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Box {
+                                IconButton(onClick = { showMenu = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
+                                }
+                                DropdownMenu(
+                                    expanded = showMenu,
+                                    onDismissRequest = { showMenu = false },
+                                    modifier = Modifier.background(Color(0xFF2C2C2C))
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Bookmarks", color = Color.White) },
+                                        onClick = { showBookmarksDialog = true; showMenu = false }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("History", color = Color.White) },
+                                        onClick = { showHistoryDialog = true; showMenu = false }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(if (isBookmarked) "Remove Bookmark" else "Add Bookmark", color = Color.White) },
+                                        onClick = {
+                                            activeTab.url.let { url ->
+                                                if (url.isNotEmpty()) {
+                                                    if (isBookmarked) {
+                                                        viewModel.removeBookmark(url)
+                                                    } else {
+                                                        viewModel.addBookmark(url, activeTab.title)
+                                                    }
+                                                }
+                                            }
+                                            showMenu = false
+                                        }
+                                    )
+                                }
+                            }
                         }
-                    },
-                    update = { view ->
-                        if (view.url != activeTab.url) {
-                            view.loadUrl(activeTab.url)
+                        // Premium progress bar (thin, iOS style)
+                        if (activeTab.isLoading) {
+                            LinearProgressIndicator(
+                                progress = activeTab.progress / 100f,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(2.dp),
+                                color = Color(0xFF0A84FF), // iOS Blue
+                                trackColor = Color.Transparent
+                            )
+                        } else {
+                            Spacer(modifier = Modifier.height(2.dp))
                         }
                     }
-                )
+                }
+            }
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+
+            // Render specific tab content (Home Page OR WebView)
+            key(activeTab?.id) {
+                if (activeTab != null) {
+                    if (activeTab.url.isEmpty()) {
+                        BrowserHomePage(
+                            recentHistory = recentHistory,
+                            urlInput = urlInput,
+                            onUrlInputChange = { urlInput = it },
+                            onSearch = { query ->
+                                val finalUrl = formatSearchUrl(query)
+                                if (finalUrl.isNotEmpty()) {
+                                    viewModel.updateCurrentTabUrl(finalUrl)
+                                }
+                            },
+                            onClearHistory = { viewModel.clearHistory() },
+                            onShowTabs = { showTabsScreen = true },
+                            tabsCount = tabs.size,
+                            onNavigateBack = onNavigateBack
+                        )
+                    } else {
+                        AndroidView(
+                            update = { webView ->
+                                webViewRef = webView
+                                val currentUrl = webView.url ?: ""
+                                val lastLoadedUrl = webView.getTag(R.id.webview_last_url) as? String ?: ""
+                                val formattedUrl = formatSearchUrl(activeTab.url)
+                                if (formattedUrl.isNotEmpty() && formattedUrl != lastLoadedUrl && formattedUrl != currentUrl) {
+                                    webView.setTag(R.id.webview_last_url, formattedUrl)
+                                    webView.loadUrl(formattedUrl)
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                            factory = { ctx ->
+                                WebView(ctx).apply {
+                                    webViewRef = this
+                                    settings.apply {
+                                        javaScriptEnabled = true
+                                        domStorageEnabled = true
+                                        databaseEnabled = true
+                                        allowFileAccess = false
+                                        allowContentAccess = false
+                                        builtInZoomControls = true
+                                        displayZoomControls = false
+                                        useWideViewPort = true
+                                        loadWithOverviewMode = true
+                                        mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                                    }
+
+
+
+                                    webViewClient = SecureWebViewClient(
+
+                                        onPageStarted = { url ->
+                                            if (url != "about:blank") {
+                                                urlInput = url
+                                                // Only update URL in ViewModel if it changed, to avoid re-triggering update logic and causing infinite loops
+                                                if (activeTab.url != url) {
+                                                    viewModel.updateCurrentTabUrl(url)
+                                                }
+                                            }
+                                            errorMessage = null
+                                        },
+                                        onPageFinished = { url, title ->
+                                            if (url != "about:blank") {
+                                                urlInput = url
+                                            }
+                                            if (title != null) viewModel.updateCurrentTabTitle(title)
+                                            if (url != "about:blank") {
+                                                viewModel.addHistory(url, title ?: "Unknown")
+                                            }
+                                        },
+                                        onError = { error ->
+                                            errorMessage = error
+                                        }
+                                    )
+
+                                    webChromeClient = SecureWebChromeClient(
+                                        onProgressChanged = { progress ->
+                                            viewModel.updateCurrentTabProgress(progress)
+                                        },
+                                        onTitleReceived = { title ->
+                                            viewModel.updateCurrentTabTitle(title)
+                                        }
+                                    )
+
+                                    setDownloadListener { url, _, _, _, _ ->
+                                        onNavigateToDownloads(url)
+                                    }
+
+                                    // Ensure web view tag matches loaded URL initially
+                                    val initUrl = formatSearchUrl(activeTab.url)
+                                    setTag(R.id.webview_last_url, initUrl)
+                                    loadUrl(initUrl)
+                                }
+                            }
+                        )
+                    }
+                }
             }
 
-            if (showMenu) {
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false },
-                    modifier = Modifier.background(Color(0xFF2C2C2C)).align(Alignment.TopEnd)
+            // Error Overlay
+            errorMessage?.let { msg ->
+                Box(
+                    modifier = Modifier.fillMaxWidth().background(Color.Red.copy(alpha = 0.8f)).padding(8.dp).align(Alignment.TopCenter)
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("Bookmarks", color = Color.White) },
-                        onClick = {
-                            showMenu = false
-                            showBookmarksDialog = true
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("History", color = Color.White) },
-                        onClick = {
-                            showMenu = false
-                            showHistoryDialog = true
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Downloads", color = Color.White) },
-                        onClick = {
-                            showMenu = false
-                            onNavigateToDownloads(null)
-                        }
-                    )
+                    Text("Connection Error: $msg", color = Color.White, fontSize = 12.sp)
                 }
             }
         }
 
+        // Dialogs
         if (showBookmarksDialog) {
             SimpleListDialog("Bookmarks", bookmarks.map { it.title to it.url },
                 onDismiss = { showBookmarksDialog = false },
@@ -305,109 +360,13 @@ fun BrowserScreen(
                 onClear = { viewModel.clearHistory() }
             )
         }
-
-        if (showDownloadSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showDownloadSheet = false },
-                containerColor = Color(0xFF1E1E1E)
-            ) {
-                Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                    Text("Select Download Quality", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                        items(downloadOptions) { option ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.enqueueDownload(option, activeTab!!.url)
-                                        showDownloadSheet = false
-                                        Toast.makeText(context, "Download started", Toast.LENGTH_SHORT).show()
-                                    }
-                                    .padding(vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(option.quality, color = Color.White)
-                                Text("${option.sizeBytes / (1024 * 1024)} MB", color = Color.Gray)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun BrowserTopBar(
-    urlInput: String,
-    onUrlChange: (String) -> Unit,
-    onSearch: (String) -> Unit,
-    progress: Int,
-    isBookmarked: Boolean,
-    onBookmarkClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF1E1E1E))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Lock, contentDescription = "Secure", tint = Color.Green, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            OutlinedTextField(
-                value = urlInput,
-                onValueChange = onUrlChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF2C2C2C),
-                    unfocusedContainerColor = Color(0xFF2C2C2C),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                ),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-                keyboardActions = KeyboardActions(onGo = { onSearch(urlInput) }),
-                trailingIcon = {
-                    IconButton(onClick = onBookmarkClick) {
-                        Icon(
-                            if (isBookmarked) Icons.Default.Star else Icons.Default.StarOutline,
-                            contentDescription = "Bookmark",
-                            tint = if (isBookmarked) Color.Yellow else Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            )
-        }
-        if (progress < 100) {
-            LinearProgressIndicator(
-                progress = progress / 100f,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.dp),
-                color = Color.Blue,
-                trackColor = Color.Transparent
-            )
-        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowserHomePage(
-    recentHistory: List<HistoryItem>,
+    recentHistory: List<com.example.vaultcalc.data.browser.HistoryItem>,
     urlInput: String,
     onUrlInputChange: (String) -> Unit,
     onSearch: (String) -> Unit,
@@ -420,6 +379,7 @@ fun BrowserHomePage(
         modifier = Modifier.fillMaxSize().background(AppBlack).padding(top = 16.dp, start = 16.dp, end = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Top Bar area for Home Page
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
