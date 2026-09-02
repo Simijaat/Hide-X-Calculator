@@ -393,3 +393,16 @@
 - Ensured UI elements compile successfully via `./gradlew assembleDebug`.
 - Ran unit tests specifically written for URL formatting logic (`FormatSearchUrlTest`) and layout structures successfully via `./gradlew clean test`.
 - Ran static code analysis via `./gradlew lint` effectively clearing unused references.
+
+# PR15 - Browser Back Button Fix and UI Logic Resolution
+
+## What was implemented
+- **Browser Back Button Crash Fix**:
+  - Fixed an issue where the `BackHandler` enabled state mismatched the underlying WebView history, causing crashes or broken states. Updated to ensure fallback behavior clears the tab URL if it cannot go backward.
+  - Consolidated duplicate `loadUrl` calls in `BrowserScreen.kt` to avoid race conditions and redundant page loads.
+- **Security Client Enhancements**:
+  - Fixed syntax escaping for variable references inside logging statements in `SecureWebViewClient.kt`.
+
+## Validation Performed
+- Ran `./gradlew clean test lint check` successfully without regression.
+- Ran `./gradlew clean assembleDebug` to ensure all UI elements render correctly and there are no regressions in compilation or code quality.

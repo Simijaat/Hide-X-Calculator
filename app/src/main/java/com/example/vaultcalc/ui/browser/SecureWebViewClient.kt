@@ -7,7 +7,6 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import java.io.ByteArrayInputStream
 
 class SecureWebViewClient(
     private val onPageStarted: (String) -> Unit,
@@ -22,7 +21,7 @@ class SecureWebViewClient(
             return false // Let WebView load it
         }
 
-        // Block all other schemes (file, intent, tel, mailto, etc) for absolute security
+        // Block all other schemes
         return true
     }
 
@@ -30,9 +29,6 @@ class SecureWebViewClient(
         view: WebView?,
         request: WebResourceRequest?
     ): WebResourceResponse? {
-        val url = request?.url?.toString() ?: return null
-        val currentUrl = view?.url ?: ""
-
         return super.shouldInterceptRequest(view, request)
     }
 
