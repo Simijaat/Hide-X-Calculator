@@ -1,5 +1,6 @@
 package com.example.vaultcalc.ui.browser
 
+import androidx.activity.compose.BackHandler
 import android.annotation.SuppressLint
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -61,6 +62,12 @@ fun BrowserScreen(
     val recentHistory by viewModel.recentSearchHistory.collectAsState(initial = emptyList())
 
     val isBookmarked = bookmarks.any { it.url == activeTab?.url }
+
+
+    // Handle back button presses to navigate back in WebView history if possible
+    BackHandler(enabled = webViewRef?.canGoBack() == true && activeTab != null && activeTab.url.isNotEmpty()) {
+        webViewRef?.goBack()
+    }
 
     // Full screen Tabs Switcher overlay
     if (showTabsScreen) {
@@ -234,7 +241,10 @@ fun BrowserScreen(
                         AndroidView(
                             update = { webView ->
                                 webViewRef = webView
-                                if (webView.url != activeTab.url && activeTab.url.isNotEmpty()) {
+                                val currentUrl = webView.url ?: ""
+                                val lastLoadedUrl = webView.getTag(android.R.id.text1) as? String ?: ""
+                                if (activeTab.url.isNotEmpty() && activeTab.url != lastLoadedUrl && activeTab.url != currentUrl) {
+                                    webView.setTag(android.R.id.text1, activeTab.url)
                                     webView.loadUrl(activeTab.url)
                                 }
                             },
@@ -260,14 +270,20 @@ fun BrowserScreen(
                                     webViewClient = SecureWebViewClient(
 
                                         onPageStarted = { url ->
-                                            urlInput = url
-                                            viewModel.updateCurrentTabUrl(url)
+                                            if (url != "about:blank") {
+                                                urlInput = url
+                                                viewModel.updateCurrentTabUrl(url)
+                                            }
                                             errorMessage = null
                                         },
                                         onPageFinished = { url, title ->
-                                            urlInput = url
+                                            if (url != "about:blank") {
+                                                urlInput = url
+                                            }
                                             if (title != null) viewModel.updateCurrentTabTitle(title)
-                                            viewModel.addHistory(url, title ?: "Unknown")
+                                            if (url != "about:blank") {
+                                                viewModel.addHistory(url, title ?: "Unknown")
+                                            }
                                         },
                                         onError = { error ->
                                             errorMessage = error
@@ -287,6 +303,8 @@ fun BrowserScreen(
                                         onNavigateToDownloads(url)
                                     }
 
+                                    // Ensure web view tag matches loaded URL initially
+                                    setTag(android.R.id.text1, activeTab.url)
                                     loadUrl(activeTab.url)
                                 }
                             }
