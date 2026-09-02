@@ -399,7 +399,7 @@
 ## What was implemented
 - **Browser Back Button Crash Fix**:
   - Fixed an issue where the `BackHandler` enabled state mismatched the underlying WebView history, causing crashes or broken states. Updated to ensure fallback behavior clears the tab URL if it cannot go backward.
-  - Consolidated duplicate `loadUrl` calls in `BrowserScreen.kt` to avoid race conditions and redundant page loads.
+  - Consolidated duplicate `loadUrl` calls in `BrowserScreen.kt` to avoid race conditions and redundant page loads. 
 - **Security Client Enhancements**:
   - Fixed syntax escaping for variable references inside logging statements in `SecureWebViewClient.kt`.
 

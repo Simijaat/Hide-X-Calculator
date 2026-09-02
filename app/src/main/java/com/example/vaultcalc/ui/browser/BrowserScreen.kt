@@ -49,7 +49,7 @@ fun BrowserScreen(
 
     var urlInput by remember(activeTab?.url) { mutableStateOf(activeTab?.url ?: "") }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
-
+    
 
     var showMenu by remember { mutableStateOf(false) }
     var showTabsScreen by remember { mutableStateOf(false) }
