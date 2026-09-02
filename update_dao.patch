@@ -1,0 +1,25 @@
+--- app/src/main/java/com/example/vaultcalc/data/browser/BrowserDao.kt
++++ app/src/main/java/com/example/vaultcalc/data/browser/BrowserDao.kt
+@@ -25,4 +25,22 @@
+
+     @Query("DELETE FROM history")
+     suspend fun clearHistory()
++
++    @Query("DELETE FROM history WHERE url = :url")
++    suspend fun deleteHistoryByUrl(url: String)
++
++    @Query("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY timestamp DESC LIMIT 50)")
++    suspend fun limitHistorySize()
++
++    @Query("SELECT * FROM tabs")
++    suspend fun getTabsSnapshot(): List<BrowserTab>
++
++    @Insert(onConflict = OnConflictStrategy.REPLACE)
++    suspend fun insertTab(tab: BrowserTab)
++
++    @Delete
++    suspend fun deleteTab(tab: BrowserTab)
++
++    @Query("DELETE FROM tabs WHERE id = :id")
++    suspend fun deleteTabById(id: String)
+ }

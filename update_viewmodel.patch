@@ -1,0 +1,20 @@
+--- app/src/main/java/com/example/vaultcalc/ui/browser/BrowserViewModel.kt
++++ app/src/main/java/com/example/vaultcalc/ui/browser/BrowserViewModel.kt
+@@ -40,11 +40,13 @@
+
+     fun switchTab(tabId: String) {
+         _activeTabId.value = tabId
+     }
+
+     fun closeTab(tabId: String) {
+         _tabs.update { it.filter { tab -> tab.id != tabId } }
+         if (_activeTabId.value == tabId) {
+             _activeTabId.value = _tabs.value.lastOrNull()?.id
+         }
+         viewModelScope.launch {
+             browserRepository.removeTab(tabId)
+         }
+-        if (_tabs.value.isEmpty()) {
+-            addNewTab()
+-        }
+     }

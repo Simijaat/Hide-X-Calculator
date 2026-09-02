@@ -207,6 +207,7 @@ class VaultSecurityManager @Inject constructor(
     }
 
     fun checkInactivity() {
+        // Now only used if desired; logic moved to onPause
         if (isVaultUnlocked.value && System.currentTimeMillis() - lastActivityTime > INACTIVITY_TIMEOUT_MS) {
             lockVault()
         }

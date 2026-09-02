@@ -1,11 +1,7 @@
 package com.example.vaultcalc.data.browser
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "tabs")
 data class BrowserTab(
-    @PrimaryKey val id: String,
+    val id: String,
     val url: String,
     val title: String = "New Tab",
     val isLoading: Boolean = false,

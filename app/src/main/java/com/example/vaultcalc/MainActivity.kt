@@ -36,14 +36,6 @@ class MainActivity : ComponentActivity() {
 
         handleIntent(intent)
 
-        // Start foreground inactivity tracking
-        lifecycleScope.launch {
-            while (isActive) {
-                delay(30_000) // Check every 30 seconds
-                securityManager.checkInactivity()
-            }
-        }
-
         setContent {
             VaultCalcTheme {
                 Surface(
@@ -79,5 +71,10 @@ class MainActivity : ComponentActivity() {
     override fun onUserInteraction() {
         super.onUserInteraction()
         securityManager.updateActivity()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        securityManager.lockVault()
     }
 }

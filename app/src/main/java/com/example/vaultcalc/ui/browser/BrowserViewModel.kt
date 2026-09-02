@@ -25,18 +25,27 @@ class BrowserViewModel @Inject constructor(
     private val _activeTabId = MutableStateFlow<String?>(null)
     val activeTabId: StateFlow<String?> = _activeTabId.asStateFlow()
 
-val bookmarks = browserRepository.getBookmarks()
+    val bookmarks = browserRepository.getBookmarks()
     val history = browserRepository.getHistory()
     val recentSearchHistory = browserRepository.getHistory().map { list -> list.take(10) }
 
     init {
-addNewTab("")
+        viewModelScope.launch {
+            val savedTabs = browserRepository.getTabsSnapshot()
+            if (savedTabs.isNotEmpty()) {
+                _tabs.value = savedTabs
+                _activeTabId.value = savedTabs.firstOrNull()?.id
+            } else {
+                addNewTab("")
+            }
+        }
     }
 
     fun addNewTab(url: String = "https://duckduckgo.com") {
         val newTab = BrowserTab(id = UUID.randomUUID().toString(), url = url)
         _tabs.update { it + newTab }
         _activeTabId.value = newTab.id
+        viewModelScope.launch { browserRepository.saveTab(newTab) }
     }
 
     fun switchTab(tabId: String) {
@@ -48,6 +57,10 @@ addNewTab("")
         if (_activeTabId.value == tabId) {
             _activeTabId.value = _tabs.value.lastOrNull()?.id
         }
+        viewModelScope.launch {
+            browserRepository.removeTab(tabId)
+        }
+        // Don't auto-add a new tab if they close the last one, to support direct minimize if needed. Or we can keep it as is, but request said: "minimize kerne ka button bnao". We'll handle minimize in the UI.
         if (_tabs.value.isEmpty()) {
             addNewTab()
         }
@@ -57,7 +70,11 @@ addNewTab("")
         val activeId = _activeTabId.value ?: return
         _tabs.update { currentTabs ->
             currentTabs.map {
-                if (it.id == activeId) it.copy(url = url) else it
+                if (it.id == activeId) {
+                    val updatedTab = it.copy(url = url)
+                    viewModelScope.launch { browserRepository.saveTab(updatedTab) }
+                    updatedTab
+                } else it
             }
         }
     }
@@ -66,7 +83,11 @@ addNewTab("")
         val activeId = _activeTabId.value ?: return
         _tabs.update { currentTabs ->
             currentTabs.map {
-                if (it.id == activeId) it.copy(title = title) else it
+                if (it.id == activeId) {
+                    val updatedTab = it.copy(title = title)
+                    viewModelScope.launch { browserRepository.saveTab(updatedTab) }
+                    updatedTab
+                } else it
             }
         }
     }
@@ -75,12 +96,16 @@ addNewTab("")
         val activeId = _activeTabId.value ?: return
         _tabs.update { currentTabs ->
             currentTabs.map {
-                if (it.id == activeId) it.copy(progress = progress, isLoading = progress < 100) else it
+                if (it.id == activeId) {
+                    val updatedTab = it.copy(progress = progress, isLoading = progress < 100)
+                    viewModelScope.launch { browserRepository.saveTab(updatedTab) }
+                    updatedTab
+                } else it
             }
         }
     }
 
-fun addBookmark(url: String, title: String) {
+    fun addBookmark(url: String, title: String) {
         viewModelScope.launch {
             browserRepository.addBookmark(url, title)
         }
