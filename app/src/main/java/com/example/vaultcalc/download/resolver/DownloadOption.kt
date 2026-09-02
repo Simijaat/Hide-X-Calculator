@@ -5,5 +5,6 @@ data class DownloadOption(
     val url: String,
     val mimeType: String,
     val sizeBytes: Long,
-    val isDirect: Boolean
+    val isDirect: Boolean = true,
+    val quality: String = "Default"
 )
