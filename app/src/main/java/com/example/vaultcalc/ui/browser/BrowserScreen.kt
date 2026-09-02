@@ -49,7 +49,7 @@ fun BrowserScreen(
 
     var urlInput by remember(activeTab?.url) { mutableStateOf(activeTab?.url ?: "") }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
-    val context = LocalContext.current
+    
 
     var showMenu by remember { mutableStateOf(false) }
     var showTabsScreen by remember { mutableStateOf(false) }
@@ -65,8 +65,13 @@ fun BrowserScreen(
 
 
     // Handle back button presses to navigate back in WebView history if possible
-    BackHandler(enabled = webViewRef?.canGoBack() == true && activeTab != null && activeTab.url.isNotEmpty()) {
-        webViewRef?.goBack()
+    BackHandler(enabled = activeTab != null && activeTab.url.isNotEmpty()) {
+        if (webViewRef?.canGoBack() == true) {
+            webViewRef?.goBack()
+        } else {
+            viewModel.updateCurrentTabUrl("")
+            urlInput = ""
+        }
     }
 
     // Full screen Tabs Switcher overlay
@@ -230,7 +235,6 @@ fun BrowserScreen(
                             onSearch = { query ->
                                 val finalUrl = formatSearchUrl(query)
                                 viewModel.updateCurrentTabUrl(finalUrl)
-                                webViewRef?.loadUrl(finalUrl)
                             },
                             onClearHistory = { viewModel.clearHistory() },
                             onShowTabs = { showTabsScreen = true },
@@ -329,7 +333,6 @@ fun BrowserScreen(
                 onDismiss = { showBookmarksDialog = false },
                 onSelect = { url ->
                     viewModel.updateCurrentTabUrl(url)
-                    webViewRef?.loadUrl(url)
                     showBookmarksDialog = false
                 },
                 onClear = null
@@ -341,7 +344,6 @@ fun BrowserScreen(
                 onDismiss = { showHistoryDialog = false },
                 onSelect = { url ->
                     viewModel.updateCurrentTabUrl(url)
-                    webViewRef?.loadUrl(url)
                     showHistoryDialog = false
                 },
                 onClear = { viewModel.clearHistory() }
