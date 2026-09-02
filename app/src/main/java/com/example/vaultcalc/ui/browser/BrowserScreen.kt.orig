@@ -245,7 +245,7 @@ fun BrowserScreen(
 
                     if (activeTab?.isLoading == true) {
                         LinearProgressIndicator(
-                            progress = activeTab.progress / 100f,
+                            progress = { activeTab.progress / 100f },
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.primary,
                             trackColor = Color.Transparent,
@@ -291,9 +291,6 @@ fun BrowserScreen(
                                 webChromeClient = SecureWebChromeClient(
                                     onProgressChanged = { progress ->
                                         viewModel.updateCurrentTabProgress(progress)
-                                    },
-                                    onTitleReceived = { title ->
-                                        viewModel.updateCurrentTabTitle(title)
                                     }
                                 )
 

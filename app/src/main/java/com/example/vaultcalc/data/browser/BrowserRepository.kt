@@ -27,10 +27,24 @@ class BrowserRepository @Inject constructor(
     fun getHistory(): Flow<List<HistoryItem>> = browserDao.getHistory()
 
     suspend fun addHistoryItem(url: String, title: String) {
+        browserDao.deleteHistoryByUrl(url)
         browserDao.insertHistoryItem(HistoryItem(url = url, title = title))
+        browserDao.limitHistorySize()
     }
 
     suspend fun clearHistory() {
         browserDao.clearHistory()
+    }
+
+    suspend fun getTabsSnapshot(): List<BrowserTab> {
+        return browserDao.getTabsSnapshot()
+    }
+
+    suspend fun saveTab(tab: BrowserTab) {
+        browserDao.insertTab(tab)
+    }
+
+    suspend fun removeTab(tabId: String) {
+        browserDao.deleteTabById(tabId)
     }
 }

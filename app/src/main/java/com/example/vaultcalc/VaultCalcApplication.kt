@@ -19,9 +19,9 @@ class VaultCalcApplication : Application(), DefaultLifecycleObserver {
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
     }
 
-    override fun onStop(owner: LifecycleOwner) {
-        // App goes to background
+    override fun onPause(owner: LifecycleOwner) {
+        // App goes to background or is obscured
         securityManager.lockVault()
-        super<DefaultLifecycleObserver>.onStop(owner)
+        super<DefaultLifecycleObserver>.onPause(owner)
     }
 }

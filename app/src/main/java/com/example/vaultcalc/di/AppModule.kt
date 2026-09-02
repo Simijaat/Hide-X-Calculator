@@ -2,6 +2,8 @@ package com.example.vaultcalc.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.vaultcalc.data.browser.BrowserDao
 import com.example.vaultcalc.data.browser.BrowserDatabase
 import com.example.vaultcalc.data.browser.BrowserRepository
@@ -39,11 +41,21 @@ object AppModule {
     @Provides
     @Singleton
     fun provideBrowserDatabase(@ApplicationContext context: Context): BrowserDatabase {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `tabs` (`id` TEXT NOT NULL, `url` TEXT NOT NULL, `title` TEXT NOT NULL, `isLoading` INTEGER NOT NULL, `progress` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+                )
+            }
+        }
+
         return Room.databaseBuilder(
             context,
             BrowserDatabase::class.java,
             "browser_db"
-        ).build()
+        )
+        .addMigrations(MIGRATION_1_2)
+        .build()
     }
 
     @Provides
