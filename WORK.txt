@@ -406,3 +406,16 @@
 ## Validation Performed
 - Ran `./gradlew clean test lint check` successfully without regression.
 - Ran `./gradlew clean assembleDebug` to ensure all UI elements render correctly and there are no regressions in compilation or code quality.
+
+# PR16 - Browser UI Revamp
+
+## What was implemented
+- **BrowserScreen UI Overhaul**:
+  - Moved the URL Search and Bookmark button to the top.
+  - Replaced the Lock icon with a Copy button (`Icons.Default.ContentCopy`) allowing the URL to be easily copied to the clipboard with a quick Toast notification.
+  - Formatted the URL address text properly with an expanded visible area utilizing `TextOverflow.Ellipsis`.
+  - Migrated navigation actions (`ArrowBack`, `ArrowForward`, Tabs count box, and the Menu dropdown) to a dedicated `bottomBar` integrated directly into the `Scaffold` component for a typical premium browser layout.
+  - Connected the `ArrowForward` button functionality directly to the underlying `webViewRef?.goForward()`.
+
+## Validation Performed
+- Ran `./gradlew clean test lint check assembleDebug` and it passed. All formatting and navigation logic compiled correctly.

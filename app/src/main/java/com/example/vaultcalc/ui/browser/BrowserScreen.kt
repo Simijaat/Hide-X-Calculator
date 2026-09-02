@@ -5,6 +5,9 @@ import com.example.vaultcalc.R
 
 
 import androidx.activity.compose.BackHandler
+import android.content.ClipboardManager
+import android.content.ClipData
+import android.content.Context
 import android.annotation.SuppressLint
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -55,6 +58,8 @@ fun BrowserScreen(
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     
 
+    val context = LocalContext.current
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     var showMenu by remember { mutableStateOf(false) }
     var showTabsScreen by remember { mutableStateOf(false) }
     var showBookmarksDialog by remember { mutableStateOf(false) }
@@ -112,8 +117,22 @@ fun BrowserScreen(
                                 .padding(horizontal = 8.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(onClick = onNavigateBack) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                            IconButton(onClick = {
+                                activeTab.url.let { url ->
+                                    if (url.isNotEmpty()) {
+                                        if (isBookmarked) {
+                                            viewModel.removeBookmark(url)
+                                        } else {
+                                            viewModel.addBookmark(url, activeTab.title)
+                                        }
+                                    }
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = if (isBookmarked) Icons.Default.Star else Icons.Default.StarBorder,
+                                    contentDescription = "Bookmark",
+                                    tint = if (isBookmarked) Color(0xFF0A84FF) else Color.White
+                                )
                             }
 
                             // Premium pill-shaped address bar
@@ -131,21 +150,26 @@ fun BrowserScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Lock,
-                                        contentDescription = "Secure",
-                                        tint = Color(0xFF34C759), // iOS green
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = activeTab.url,
                                         color = Color.White,
-                                        fontSize = 14.sp,
+                                        fontSize = 16.sp,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.weight(1f)
                                     )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    IconButton(
+                                        onClick = {
+                                            val clip = ClipData.newPlainText("URL", activeTab.url)
+                                            clipboardManager.setPrimaryClip(clip)
+                                            Toast.makeText(context, "URL copied to clipboard", Toast.LENGTH_SHORT).show()
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy URL", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     IconButton(
                                         onClick = {
                                             webViewRef?.reload()
@@ -154,57 +178,6 @@ fun BrowserScreen(
                                     ) {
                                         Icon(Icons.Default.Refresh, contentDescription = "Reload", tint = Color.Gray, modifier = Modifier.size(16.dp))
                                     }
-                                }
-                            }
-
-                            IconButton(onClick = { showTabsScreen = true }) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .border(2.dp, Color.White, RoundedCornerShape(4.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = tabs.size.toString(),
-                                        color = Color.White,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-
-                            Box {
-                                IconButton(onClick = { showMenu = true }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
-                                }
-                                DropdownMenu(
-                                    expanded = showMenu,
-                                    onDismissRequest = { showMenu = false },
-                                    modifier = Modifier.background(Color(0xFF2C2C2C))
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text("Bookmarks", color = Color.White) },
-                                        onClick = { showBookmarksDialog = true; showMenu = false }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("History", color = Color.White) },
-                                        onClick = { showHistoryDialog = true; showMenu = false }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(if (isBookmarked) "Remove Bookmark" else "Add Bookmark", color = Color.White) },
-                                        onClick = {
-                                            activeTab.url.let { url ->
-                                                if (url.isNotEmpty()) {
-                                                    if (isBookmarked) {
-                                                        viewModel.removeBookmark(url)
-                                                    } else {
-                                                        viewModel.addBookmark(url, activeTab.title)
-                                                    }
-                                                }
-                                            }
-                                            showMenu = false
-                                        }
-                                    )
                                 }
                             }
                         }
@@ -220,6 +193,76 @@ fun BrowserScreen(
                             )
                         } else {
                             Spacer(modifier = Modifier.height(2.dp))
+                        }
+                    }
+                }
+            }
+        },
+        bottomBar = {
+            if (activeTab != null && activeTab.url.isNotEmpty()) {
+                Surface(
+                    color = Color(0xFF1E1E1E),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
+                        IconButton(
+                            onClick = {
+                                if (webViewRef?.canGoForward() == true) {
+                                    webViewRef?.goForward()
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.ArrowForward, contentDescription = "Forward", tint = Color.White)
+                        }
+
+                        IconButton(onClick = { viewModel.updateCurrentTabUrl("") }) {
+                            Icon(Icons.Default.Home, contentDescription = "Home", tint = Color.White)
+                        }
+
+                        IconButton(onClick = { showTabsScreen = true }) {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .border(2.dp, Color.White, RoundedCornerShape(4.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = tabs.size.toString(),
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false },
+                                modifier = Modifier.background(Color(0xFF2C2C2C))
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Bookmarks", color = Color.White) },
+                                    onClick = { showBookmarksDialog = true; showMenu = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("History", color = Color.White) },
+                                    onClick = { showHistoryDialog = true; showMenu = false }
+                                )
+                            }
                         }
                     }
                 }
