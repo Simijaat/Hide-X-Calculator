@@ -10,3 +10,9 @@ Completed Browser UI enhancement and secured the Vault background view.
    - Replaced forward button with standard Android `MoreVert` (3-dots) menu implementation that contains `Forward`, `Reload`, `Bookmarks`, `History`, and `Downloads`.
 
 Validated the code compiling and linting properly with `./gradlew assembleDebug`, `test`, `lint`, and `check`.
+
+
+3. More Browser UI fixes:
+   - Removed Back (Minimize) button from the Browser Top Bar, moving it to the 3-dots menu.
+   - Relocated the Save (Bookmark) button from the URL text field into the 3-dots menu.
+   - Improved URL bar text display by adjusting layout padding and setting appropriate constraints to fit the content cleanly.

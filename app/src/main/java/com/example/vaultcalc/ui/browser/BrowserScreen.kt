@@ -133,24 +133,17 @@ fun BrowserScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFF1E1E1E))
-                            .height(56.dp)
-                            .padding(horizontal = 16.dp),
+                            .height(64.dp)
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        IconButton(onClick = onNavigateBack) { // Interpret as minimize
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Minimize", tint = Color.White)
-                        }
-                        IconButton(onClick = { webViewRef?.goBack() }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
-                        }
-
                         OutlinedTextField(
                             value = urlInput,
                             onValueChange = { urlInput = it },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp)
+                                .fillMaxHeight()
                                 .padding(horizontal = 8.dp),
                             singleLine = true,
                             shape = RoundedCornerShape(24.dp),
@@ -169,25 +162,7 @@ fun BrowserScreen(
                                     viewModel.updateCurrentTabUrl(formatted)
                                     webViewRef?.loadUrl(formatted)
                                 }
-                            ),
-                            trailingIcon = {
-                                val isBookmarked = bookmarks.any { it.url == activeTab?.url }
-                                IconButton(onClick = {
-                                    activeTab?.let {
-                                        if (isBookmarked) {
-                                            viewModel.removeBookmark(it.url)
-                                        } else {
-                                            viewModel.addBookmark(it.url, it.title)
-                                        }
-                                    }
-                                }) {
-                                    Icon(
-                                        if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                                        contentDescription = "Bookmark",
-                                        tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.Gray
-                                    )
-                                }
-                            }
+                            )
                         )
 
                         IconButton(onClick = { showTabsScreen = true }) {
@@ -216,6 +191,16 @@ fun BrowserScreen(
                                 modifier = Modifier.background(Color(0xFF2C2C2C))
                             ) {
                                 DropdownMenuItem(
+                                    text = { Text("Minimize", color = Color.White) },
+                                    leadingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.White) },
+                                    onClick = { onNavigateBack(); showMoreMenu = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Back", color = Color.White) },
+                                    leadingIcon = { Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White) },
+                                    onClick = { webViewRef?.goBack(); showMoreMenu = false }
+                                )
+                                DropdownMenuItem(
                                     text = { Text("Forward", color = Color.White) },
                                     leadingIcon = { Icon(Icons.Default.ArrowForward, contentDescription = null, tint = Color.White) },
                                     onClick = { webViewRef?.goForward(); showMoreMenu = false }
@@ -225,9 +210,32 @@ fun BrowserScreen(
                                     leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White) },
                                     onClick = { webViewRef?.reload(); showMoreMenu = false }
                                 )
+
+                                val isBookmarked = bookmarks.any { it.url == activeTab?.url }
+                                DropdownMenuItem(
+                                    text = { Text("Save", color = Color.White) },
+                                    leadingIcon = {
+                                        Icon(
+                                            if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                            contentDescription = null,
+                                            tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.White
+                                        )
+                                    },
+                                    onClick = {
+                                        activeTab?.let {
+                                            if (isBookmarked) {
+                                                viewModel.removeBookmark(it.url)
+                                            } else {
+                                                viewModel.addBookmark(it.url, it.title)
+                                            }
+                                        }
+                                        showMoreMenu = false
+                                    }
+                                )
+
                                 DropdownMenuItem(
                                     text = { Text("Bookmarks", color = Color.White) },
-                                    leadingIcon = { Icon(Icons.Default.Bookmark, contentDescription = null, tint = Color.White) },
+                                    leadingIcon = { Icon(Icons.Default.Bookmarks, contentDescription = null, tint = Color.White) },
                                     onClick = { showBookmarksDialog = true; showMoreMenu = false }
                                 )
                                 DropdownMenuItem(
@@ -355,9 +363,24 @@ fun BrowserHomePage(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Default.ArrowDropDown, contentDescription = "Minimize", tint = Color.White)
+            Box {
+                var showHomeMenu by remember { mutableStateOf(false) }
+                IconButton(onClick = { showHomeMenu = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.White)
+                }
+                DropdownMenu(
+                    expanded = showHomeMenu,
+                    onDismissRequest = { showHomeMenu = false },
+                    modifier = Modifier.background(Color(0xFF2C2C2C))
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Minimize", color = Color.White) },
+                        leadingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.White) },
+                        onClick = { onNavigateBack(); showHomeMenu = false }
+                    )
+                }
             }
+
             IconButton(onClick = onShowTabs) {
                 Box(
                     modifier = Modifier
