@@ -2,13 +2,21 @@ package com.example.vaultcalc
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
 import com.example.vaultcalc.data.security.VaultSecurityManager
 import com.example.vaultcalc.ui.theme.VaultCalcTheme
@@ -31,8 +39,12 @@ class MainActivity : ComponentActivity() {
     private val _sharedUrl = MutableStateFlow<String?>(null)
     val sharedUrl: StateFlow<String?> = _sharedUrl.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    private var wasPaused = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
 
         handleIntent(intent)
 
@@ -42,7 +54,22 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    VaultCalcNavigation(securityManager, sharedUrl)
+                    val isLoading by _isLoading.collectAsState()
+
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        VaultCalcNavigation(securityManager, sharedUrl)
+
+                        if (isLoading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = Color.White)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -73,8 +100,21 @@ class MainActivity : ComponentActivity() {
         securityManager.updateActivity()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (wasPaused) {
+            _isLoading.value = true
+            lifecycleScope.launch {
+                delay(1000)
+                _isLoading.value = false
+                wasPaused = false
+            }
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         securityManager.lockVault()
+        wasPaused = true
     }
 }
