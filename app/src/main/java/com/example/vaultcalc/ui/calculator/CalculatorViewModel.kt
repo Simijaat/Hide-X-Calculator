@@ -202,7 +202,7 @@ class CalculatorViewModel @Inject constructor(
                 throw ArithmeticException("Division by zero")
             }
             // format to remove .0 if it's a whole number
-            val df = DecimalFormat("#.##########")
+            val df = java.text.DecimalFormat("#.##########")
             val formattedResult = df.format(result)
             currentInput = formattedResult
             isResult = true

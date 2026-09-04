@@ -341,7 +341,7 @@ fun BrowserScreen(
                                     }
                                 )
 
-                                setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+                                setDownloadListener { url, _, _, _, _ ->
                                     onNavigateToDownloads(url)
                                 }
                             }

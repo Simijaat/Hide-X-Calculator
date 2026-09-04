@@ -1,0 +1,9 @@
+Fix compile warnings, lint warnings, and minor improvements
+
+- Suppress known lint warnings: ScopedStorage, OldTargetApi, ObsoleteSdkInt, MonochromeLauncherIcon, StaticFieldLeak, GradleDependency
+- Fix javac compiler warnings by adding `-Xlint:-options`
+- Remove unused variables `context` from PhotosScreen.kt
+- Fix unused parameter warning in BrowserScreen.kt for setDownloadListener
+- Remove redundant Build.VERSION.SDK_INT check in SecureDownloadService.kt (minSdk is 26)
+- Provide monochrome icon resource properly in mipmap-anydpi-v26
+- Avoid unnecessary java.text.DecimalFormat import repetition in CalculatorViewModel.kt

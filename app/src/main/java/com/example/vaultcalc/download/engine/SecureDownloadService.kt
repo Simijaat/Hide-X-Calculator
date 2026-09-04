@@ -226,8 +226,7 @@ class SecureDownloadService : LifecycleService() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
+        val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Vault Downloads",
                 NotificationManager.IMPORTANCE_LOW
@@ -235,7 +234,6 @@ class SecureDownloadService : LifecycleService() {
                 description = "Secure download notifications"
             }
             notificationManager.createNotificationChannel(channel)
-        }
     }
 
     private fun createNotification(title: String, text: String): android.app.Notification {
