@@ -45,7 +45,7 @@ fun PhotosScreen(
     val context = LocalContext.current
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia()
+        contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
         if (uris.isNotEmpty()) {
             viewModel.importPhotos(uris)
@@ -63,11 +63,7 @@ fun PhotosScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-                        photoPickerLauncher.launch(
-                            androidx.activity.result.PickVisualMediaRequest(
-                                ActivityResultContracts.PickVisualMedia.ImageOnly
-                            )
-                        )
+                        photoPickerLauncher.launch("image/*")
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "Add Photos", tint = Color.White)
                     }
@@ -132,11 +128,8 @@ fun PhotoThumbnail(
     var bitmap by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
 
     LaunchedEffect(fileName) {
-        val bytes = viewModel.decryptPhoto(fileName)
-        if (bytes != null) {
-            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            bitmap = bmp?.asImageBitmap()
-        }
+        val bmp = viewModel.loadThumbnail(fileName, 300, 300)
+        bitmap = bmp?.asImageBitmap()
     }
 
     Box(
@@ -177,11 +170,8 @@ fun PhotoViewerOverlay(
     }
 
     LaunchedEffect(fileName) {
-        val bytes = viewModel.decryptPhoto(fileName)
-        if (bytes != null) {
-            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            bitmap = bmp?.asImageBitmap()
-        }
+        val bmp = viewModel.loadThumbnail(fileName, 300, 300)
+        bitmap = bmp?.asImageBitmap()
     }
 
     Dialog(

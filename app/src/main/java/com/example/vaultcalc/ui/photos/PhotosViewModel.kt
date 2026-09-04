@@ -45,12 +45,25 @@ class PhotosViewModel @Inject constructor(
             _isLoading.value = true
             for (uri in uris) {
                 try {
+                    var success = false
                     context.contentResolver.openInputStream(uri)?.use { stream ->
                         val bytes = stream.readBytes()
                         val encryptedBytes = securityManager.encryptPhoto(bytes)
                         if (encryptedBytes != null) {
                             val fileName = "IMG_${UUID.randomUUID()}.vphoto"
                             storageManager.savePhoto(fileName, encryptedBytes)
+                            success = true
+                        }
+                    }
+                    if (success) {
+                        try {
+                            android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri)
+                        } catch (e: Exception) {
+                            try {
+                                context.contentResolver.delete(uri, null, null)
+                            } catch (e2: Exception) {
+                                e2.printStackTrace()
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -91,5 +104,42 @@ class PhotosViewModel @Inject constructor(
             }
             _isLoading.value = false
         }
+    }
+
+    suspend fun loadThumbnail(fileName: String, reqWidth: Int, reqHeight: Int): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
+        val bytes = decryptPhoto(fileName) ?: return@withContext null
+        decodeSampledBitmapFromByteArray(bytes, reqWidth, reqHeight)
+    }
+
+    suspend fun loadFullImage(fileName: String): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
+        val bytes = decryptPhoto(fileName) ?: return@withContext null
+        decodeSampledBitmapFromByteArray(bytes, 2048, 2048)
+    }
+
+    private fun decodeSampledBitmapFromByteArray(data: ByteArray, reqWidth: Int, reqHeight: Int): android.graphics.Bitmap? {
+        val options = android.graphics.BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+        }
+        android.graphics.BitmapFactory.decodeByteArray(data, 0, data.size, options)
+
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
+        options.inJustDecodeBounds = false
+
+        return android.graphics.BitmapFactory.decodeByteArray(data, 0, data.size, options)
+    }
+
+    private fun calculateInSampleSize(options: android.graphics.BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val (height: Int, width: Int) = options.outHeight to options.outWidth
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight: Int = height / 2
+            val halfWidth: Int = width / 2
+
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
     }
 }
