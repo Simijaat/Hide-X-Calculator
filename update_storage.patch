@@ -1,0 +1,257 @@
+--- app/src/main/java/com/example/vaultcalc/data/crypto/VaultStorageManager.kt
++++ app/src/main/java/com/example/vaultcalc/data/crypto/VaultStorageManager.kt
+@@ -4,64 +4,60 @@
+ import android.content.Intent
+ import android.net.Uri
+ import android.util.Base64
+-import androidx.documentfile.provider.DocumentFile
++import android.os.Environment
+ import dagger.hilt.android.qualifiers.ApplicationContext
+ import org.json.JSONObject
++import java.io.File
++import java.io.FileOutputStream
++import java.io.FileInputStream
+ import javax.inject.Inject
+ import javax.inject.Singleton
+
+ @Singleton
+ class VaultStorageManager @Inject constructor(
+     @ApplicationContext private val context: Context
+ ) {
+-    private val prefs = context.getSharedPreferences("vault_storage_prefs", Context.MODE_PRIVATE)
+-
+-    var vaultUri: Uri?
+-        get() {
+-            val uriString = prefs.getString("vault_uri", null)
+-            return if (uriString != null) Uri.parse(uriString) else null
+-        }
+-        set(value) {
+-            prefs.edit().putString("vault_uri", value?.toString()).apply()
+-            value?.let { uri ->
+-                try {
+-                    val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+-                    context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+-
+-                    val dir = DocumentFile.fromTreeUri(context, uri)
+-                    if (dir != null && dir.findFile(".nomedia") == null) {
+-                        dir.createFile("*/*", ".nomedia")
+-                    }
+-                } catch (e: Exception) {
+-                    e.printStackTrace()
+-                }
++    private val vaultDir: File
++        get() {
++            val dir = File(Environment.getExternalStorageDirectory(), ".SystemConfig/.vault")
++            if (!dir.exists()) {
++                dir.mkdirs()
+             }
++            val nomedia = File(dir, ".nomedia")
++            if (!nomedia.exists()) {
++                nomedia.createNewFile()
++            }
++            return dir
+         }
+
+-    fun hasDirectorySelected(): Boolean = vaultUri != null
++    // Backward compatibility for ViewModel
++    var vaultUri: Uri? = null
+
+-    private fun getConfigFile(): DocumentFile? {
+-        val uri = vaultUri ?: return null
+-        val dir = DocumentFile.fromTreeUri(context, uri) ?: return null
+-        var file = dir.findFile("config.vdata")
+-        if (file == null) {
+-            file = dir.createFile("application/octet-stream", "config.vdata")
++    fun hasDirectorySelected(): Boolean = true
++
++    private fun getConfigFile(): File {
++        val file = File(vaultDir, "config.vdata")
++        if (!file.exists()) {
++            file.createNewFile()
+         }
+         return file
+     }
+
+     fun hasConfig(): Boolean {
+-        val uri = vaultUri ?: return false
+-        val dir = DocumentFile.fromTreeUri(context, uri) ?: return false
+-        return dir.findFile("config.vdata") != null
++        return File(vaultDir, "config.vdata").exists()
+     }
+
+     fun saveConfig(
+         pinSalt: ByteArray,
+         recoverySalt: ByteArray,
+         encryptedMasterKeyWithPin: ByteArray,
+         pinIv: ByteArray,
+         encryptedMasterKeyWithRecovery: ByteArray,
+         recoveryIv: ByteArray,
+         securityQuestion: String,
+         pinHash: ByteArray
+     ) {
+         val json = JSONObject().apply {
+@@ -75,9 +71,9 @@
+             put("pinHash", Base64.encodeToString(pinHash, Base64.NO_WRAP))
+         }
+
+-        val file = getConfigFile() ?: return
++        val file = getConfigFile()
+         try {
+-            context.contentResolver.openOutputStream(file.uri, "w")?.use { stream ->
++            FileOutputStream(file).use { stream ->
+                 val obfuscated = Base64.encodeToString(json.toString().toByteArray(), Base64.NO_WRAP)
+                 stream.write(obfuscated.toByteArray())
+             }
+@@ -87,14 +83,12 @@
+     }
+
+     fun loadConfig(): VaultConfig? {
+-        val uri = vaultUri ?: return null
+-        val dir = DocumentFile.fromTreeUri(context, uri) ?: return null
+-        val file = dir.findFile("config.vdata") ?: return null
++        val file = File(vaultDir, "config.vdata")
++        if (!file.exists()) return null
+
+         return try {
+-            val content = context.contentResolver.openInputStream(file.uri)?.use { stream ->
+-                stream.bufferedReader().readText()
+-            } ?: return null
++            val content = FileInputStream(file).bufferedReader().readText()
++            if (content.isEmpty()) return null
+
+             val decodedJson = String(Base64.decode(content, Base64.NO_WRAP))
+             val json = JSONObject(decodedJson)
+@@ -113,90 +107,76 @@
+     }
+
+     fun writeDataToFile(fileName: String, data: ByteArray) {
+-        val uri = vaultUri ?: return
+-        val dir = DocumentFile.fromTreeUri(context, uri) ?: return
+-        var file = dir.findFile(fileName)
+-        if (file == null) {
+-            file = dir.createFile("application/octet-stream", fileName)
+-        }
+-        if (file == null) return
++        val file = File(vaultDir, fileName)
+         try {
+-            context.contentResolver.openOutputStream(file.uri, "w")?.use { stream ->
++            FileOutputStream(file).use { stream ->
+                 stream.write(data)
+             }
+         } catch (e: Exception) {
+             e.printStackTrace()
+         }
+     }
+
+     fun readDataFromFile(fileName: String): ByteArray? {
+-        val uri = vaultUri ?: return null
+-        val dir = DocumentFile.fromTreeUri(context, uri) ?: return null
+-        val file = dir.findFile(fileName) ?: return null
++        val file = File(vaultDir, fileName)
++        if (!file.exists()) return null
+         return try {
+-            context.contentResolver.openInputStream(file.uri)?.use { stream ->
++            FileInputStream(file).use { stream ->
+                 stream.readBytes()
+             }
+         } catch (e: Exception) {
+             null
+         }
+     }
+
+     fun fileExists(fileName: String): Boolean {
+-        val uri = vaultUri ?: return false
+-        val dir = DocumentFile.fromTreeUri(context, uri) ?: return false
+-        return dir.findFile(fileName) != null
++        return File(vaultDir, fileName).exists()
+     }
++
+     // Photo specific methods
+-    private fun getPhotosDir(): DocumentFile? {
+-        val uri = vaultUri ?: return null
+-        val dir = DocumentFile.fromTreeUri(context, uri) ?: return null
+-        var photosDir = dir.findFile("Photos")
+-        if (photosDir == null) {
+-            photosDir = dir.createDirectory("Photos")
++    private fun getPhotosDir(): File {
++        val dir = File(vaultDir, "Photos")
++        if (!dir.exists()) {
++            dir.mkdirs()
+         }
+-        return photosDir
++        return dir
+     }
+
+     fun listPhotos(): List<String> {
+-        val photosDir = getPhotosDir() ?: return emptyList()
+-        return photosDir.listFiles().mapNotNull { it.name }.filter { !it.startsWith(".") }
++        val photosDir = getPhotosDir()
++        return photosDir.listFiles()?.mapNotNull { it.name }?.filter { !it.startsWith(".") } ?: emptyList()
+     }
+
+     fun savePhoto(fileName: String, data: ByteArray) {
+-        val photosDir = getPhotosDir() ?: return
+-        var file = photosDir.findFile(fileName)
+-        if (file == null) {
+-            file = photosDir.createFile("application/octet-stream", fileName)
+-        }
+-        if (file == null) return
++        val file = File(getPhotosDir(), fileName)
+         try {
+-            context.contentResolver.openOutputStream(file.uri, "w")?.use { stream ->
++            FileOutputStream(file).use { stream ->
+                 stream.write(data)
+             }
+         } catch (e: Exception) {
+             e.printStackTrace()
+         }
+     }
+
+     fun exportPhoto(fileName: String, destUri: Uri): Boolean {
+-        val photosDir = getPhotosDir() ?: return false
+-        val file = photosDir.findFile(fileName) ?: return false
++        val file = File(getPhotosDir(), fileName)
++        if (!file.exists()) return false
+         return try {
+-            context.contentResolver.openInputStream(file.uri)?.use { input ->
++            FileInputStream(file).use { input ->
+                 context.contentResolver.openOutputStream(destUri)?.use { output ->
+                     input.copyTo(output)
+                 }
+             }
+             true
+         } catch (e: Exception) {
+             e.printStackTrace()
+             false
+         }
+     }
+
+     fun getPhotoUri(fileName: String): Uri? {
+-        val photosDir = getPhotosDir() ?: return null
+-        return photosDir.findFile(fileName)?.uri
++        val file = File(getPhotosDir(), fileName)
++        return if (file.exists()) Uri.fromFile(file) else null
+     }
+
+     fun readPhoto(fileName: String): ByteArray? {
+-        val photosDir = getPhotosDir() ?: return null
+-        val file = photosDir.findFile(fileName) ?: return null
++        val file = File(getPhotosDir(), fileName)
++        if (!file.exists()) return null
+         return try {
+-            context.contentResolver.openInputStream(file.uri)?.use { stream ->
++            FileInputStream(file).use { stream ->
+                 stream.readBytes()
+             }
+         } catch (e: Exception) {
+             null
+         }
+     }
+
+     fun deletePhoto(fileName: String): Boolean {
+-        val photosDir = getPhotosDir() ?: return false
+-        val file = photosDir.findFile(fileName) ?: return false
++        val file = File(getPhotosDir(), fileName)
+         return file.delete()
+     }
+ }

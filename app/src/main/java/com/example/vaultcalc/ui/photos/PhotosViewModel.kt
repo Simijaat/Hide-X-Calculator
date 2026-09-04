@@ -40,30 +40,63 @@ class PhotosViewModel @Inject constructor(
         }
     }
 
+
+
     fun importPhotos(uris: List<Uri>) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             for (uri in uris) {
                 try {
                     var success = false
+                    val realPath = getRealPathFromURI(context, uri)
+                    var originalName = "unknown.jpg"
+                    if (realPath != null) {
+                        originalName = java.io.File(realPath).name
+                    } else {
+                        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                            if (cursor.moveToFirst()) {
+                                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                                if (nameIndex != -1) {
+                                    originalName = cursor.getString(nameIndex)
+                                }
+                            }
+                        }
+                    }
+
+                    val fileName = "IMG_${UUID.randomUUID()}.bin"
+
                     context.contentResolver.openInputStream(uri)?.use { stream ->
                         val bytes = stream.readBytes()
                         val encryptedBytes = securityManager.encryptPhoto(bytes)
                         if (encryptedBytes != null) {
-                            val fileName = "IMG_${UUID.randomUUID()}.vphoto"
                             storageManager.savePhoto(fileName, encryptedBytes)
                             success = true
                         }
                     }
                     if (success) {
+                        storageManager.savePhotoMetadata(fileName, originalName, realPath ?: "")
+
+                        var deleted = false
+                        if (realPath != null) {
+                            val file = java.io.File(realPath)
+                            if (file.exists()) {
+                                deleted = file.delete()
+                            }
+                        }
                         try {
-                            android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri)
+                            if (!deleted) {
+                                android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri)
+                            }
                         } catch (e: Exception) {
                             try {
                                 context.contentResolver.delete(uri, null, null)
                             } catch (e2: Exception) {
                                 e2.printStackTrace()
                             }
+                        }
+
+                        if (realPath != null) {
+                             android.media.MediaScannerConnection.scanFile(context, arrayOf(realPath), null, null)
                         }
                     }
                 } catch (e: Exception) {
@@ -75,6 +108,22 @@ class PhotosViewModel @Inject constructor(
         }
     }
 
+    private fun getRealPathFromURI(context: Context, contentUri: Uri): String? {
+        var cursor: android.database.Cursor? = null
+        try {
+            val proj = arrayOf(android.provider.MediaStore.Images.Media.DATA)
+            cursor = context.contentResolver.query(contentUri, proj, null, null, null)
+            if (cursor != null && cursor.moveToFirst()) {
+                val columnIndex = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Images.Media.DATA)
+                return cursor.getString(columnIndex)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            cursor?.close()
+        }
+        return null
+    }
     fun decryptPhoto(fileName: String): ByteArray? {
         val encryptedData = storageManager.readPhoto(fileName) ?: return null
         return securityManager.decryptPhoto(encryptedData)
@@ -84,20 +133,33 @@ class PhotosViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val success = storageManager.deletePhoto(fileName)
             if (success) {
+                storageManager.deletePhotoMetadata(fileName)
                 _photos.value = storageManager.listPhotos()
             }
         }
     }
 
-    fun exportPhoto(fileName: String, destUri: Uri) {
+    fun exportPhoto(fileName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
                 val decryptedBytes = decryptPhoto(fileName)
-                if (decryptedBytes != null) {
-                    context.contentResolver.openOutputStream(destUri)?.use { stream ->
+                val meta = storageManager.getPhotoMetadata(fileName)
+                if (decryptedBytes != null && meta != null && meta.originalPath.isNotEmpty()) {
+                    val destFile = java.io.File(meta.originalPath)
+
+                    // Recreate directory if it doesn't exist
+                    destFile.parentFile?.mkdirs()
+
+                    java.io.FileOutputStream(destFile).use { stream ->
                         stream.write(decryptedBytes)
                     }
+
+                    android.media.MediaScannerConnection.scanFile(context, arrayOf(meta.originalPath), null, null)
+
+                    storageManager.deletePhoto(fileName)
+                    storageManager.deletePhotoMetadata(fileName)
+                    _photos.value = storageManager.listPhotos()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
