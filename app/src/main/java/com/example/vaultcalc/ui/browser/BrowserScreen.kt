@@ -14,7 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -128,68 +130,100 @@ fun BrowserScreen(
                         onNavigateBack = onNavigateBack // Pass minimize intent
                     )
                 } else {
-                    // Browser Top Bar
-                    Row(
+                    // Advanced Browser Top Bar
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF1E1E1E))
-                            .height(64.dp)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .height(56.dp)
+                            .background(
+                                color = Color(0xFF2C2C2E),
+                                shape = RoundedCornerShape(28.dp)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color(0xFF3A3A3C),
+                                shape = RoundedCornerShape(28.dp)
+                            )
                     ) {
-                        OutlinedTextField(
-                            value = urlInput,
-                            onValueChange = { urlInput = it },
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
+                                .fillMaxSize()
                                 .padding(horizontal = 8.dp),
-                            singleLine = true,
-                            shape = RoundedCornerShape(24.dp),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF2C2C2C),
-                                unfocusedContainerColor = Color(0xFF2C2C2C),
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-                            keyboardActions = KeyboardActions(
-                                onGo = {
-                                    val formatted = formatSearchUrl(urlInput)
-                                    viewModel.updateCurrentTabUrl(formatted)
-                                    webViewRef?.loadUrl(formatted)
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Lock,
+                                contentDescription = "Secure",
+                                tint = Color(0xFF30D158),
+                                modifier = Modifier
+                                    .padding(start = 8.dp, end = 8.dp)
+                                    .size(16.dp)
+                            )
+
+                            BasicTextField(
+                                value = urlInput,
+                                onValueChange = { urlInput = it },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp),
+                                singleLine = true,
+                                textStyle = androidx.compose.ui.text.TextStyle(
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                ),
+                                cursorBrush = SolidColor(Color.White),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+                                keyboardActions = KeyboardActions(
+                                    onGo = {
+                                        val formatted = formatSearchUrl(urlInput)
+                                        viewModel.updateCurrentTabUrl(formatted)
+                                        webViewRef?.loadUrl(formatted)
+                                    }
+                                ),
+                                decorationBox = { innerTextField ->
+                                    if (urlInput.isEmpty()) {
+                                        Text(
+                                            text = "Search or type URL",
+                                            color = Color.Gray,
+                                            fontSize = 16.sp
+                                        )
+                                    }
+                                    innerTextField()
                                 }
                             )
-                        )
 
-                        IconButton(onClick = { showTabsScreen = true }) {
-                            Box(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .border(2.dp, Color.White, RoundedCornerShape(4.dp)),
-                                contentAlignment = Alignment.Center
+                            IconButton(
+                                onClick = { showTabsScreen = true },
+                                modifier = Modifier.size(36.dp)
                             ) {
-                                Text(
-                                    text = tabs.size.toString(),
-                                    color = Color.White,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .border(2.dp, Color.White, RoundedCornerShape(6.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = tabs.size.toString(),
+                                        color = Color.White,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
-                        }
 
-                        Box {
-                            IconButton(onClick = { showMoreMenu = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.White)
-                            }
-                            DropdownMenu(
-                                expanded = showMoreMenu,
-                                onDismissRequest = { showMoreMenu = false },
-                                modifier = Modifier.background(Color(0xFF2C2C2C))
-                            ) {
+                            Box {
+                                IconButton(
+                                    onClick = { showMoreMenu = true },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.White)
+                                }
+                                DropdownMenu(
+                                    expanded = showMoreMenu,
+                                    onDismissRequest = { showMoreMenu = false },
+                                    modifier = Modifier.background(Color(0xFF2C2C2C))
+                                ) {
                                 DropdownMenuItem(
                                     text = { Text("Minimize", color = Color.White) },
                                     leadingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.White) },
@@ -252,6 +286,7 @@ fun BrowserScreen(
                         }
                     }
 
+                    }
                     if (activeTab?.isLoading == true) {
                         LinearProgressIndicator(
                             progress = activeTab.progress / 100f,
@@ -409,29 +444,75 @@ fun BrowserHomePage(
         )
         Spacer(modifier = Modifier.height(32.dp))
 
-        OutlinedTextField(
-            value = urlInput,
-            onValueChange = onUrlInputChange,
-            placeholder = { Text("Search or type web address", color = Color.Gray) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFF1E1E1E),
-                unfocusedContainerColor = Color(0xFF1E1E1E),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            ),
-            trailingIcon = {
-                IconButton(onClick = { onSearch(urlInput) }) {
-                    Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+        // Advanced Home Search Bar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .background(
+                    color = Color(0xFF2C2C2E),
+                    shape = RoundedCornerShape(28.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFF3A3A3C),
+                    shape = RoundedCornerShape(28.dp)
+                )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = Color.Gray,
+                    modifier = Modifier.padding(end = 12.dp)
+                )
+
+                BasicTextField(
+                    value = urlInput,
+                    onValueChange = onUrlInputChange,
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        color = Color.White,
+                        fontSize = 16.sp
+                    ),
+                    cursorBrush = SolidColor(Color.White),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+                    keyboardActions = KeyboardActions(
+                        onGo = { onSearch(urlInput) }
+                    ),
+                    decorationBox = { innerTextField ->
+                        if (urlInput.isEmpty()) {
+                            Text(
+                                text = "Search or type web address",
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                )
+
+                if (urlInput.isNotEmpty()) {
+                    IconButton(
+                        onClick = { onUrlInputChange("") },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Clear",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-            },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-            keyboardActions = KeyboardActions(onGo = { onSearch(urlInput) })
-        )
+            }
+        }
 
         Spacer(modifier = Modifier.height(48.dp))
         Row(
