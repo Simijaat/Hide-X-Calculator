@@ -55,6 +55,8 @@ class VaultSecurityManager @Inject constructor(
     var activeMasterKey: SecretKey? = null
         private set
 
+    var isExpectingExternalActivity = false
+
     fun isPinSet(): Boolean {
         return vaultStorageManager.hasConfig() || (sharedPreferences.contains(KEY_PIN_HASH) && sharedPreferences.contains(KEY_PIN_SALT))
     }
@@ -218,6 +220,7 @@ class VaultSecurityManager @Inject constructor(
     }
 
     fun lockVault() {
+        if (isExpectingExternalActivity) return
         _isVaultUnlocked.value = false
     }
 

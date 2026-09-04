@@ -116,6 +116,10 @@ class PhotosViewModel @Inject constructor(
         decodeSampledBitmapFromByteArray(bytes, 2048, 2048)
     }
 
+    fun setExpectingExternalActivity(expecting: Boolean) {
+        securityManager.isExpectingExternalActivity = expecting
+    }
+
     private fun decodeSampledBitmapFromByteArray(data: ByteArray, reqWidth: Int, reqHeight: Int): android.graphics.Bitmap? {
         val options = android.graphics.BitmapFactory.Options().apply {
             inJustDecodeBounds = true

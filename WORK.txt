@@ -41,3 +41,9 @@ Update: Improved Photo Deletion & Fixed UI Rendering
 - Fixed a bug in `PhotoViewerOverlay` where `loadThumbnail` was erroneously used instead of `loadFullImage`, which resulted in a blurry full-screen image viewing experience.
 - Resolved potential binary file corruption upon saving new configurations by ensuring `VaultStorageManager` strictly uses the `"wt"` (write & truncate) parameter for output streams.
 - Refactored `importPhotos` in `PhotosViewModel` to aggressively target and delete the original source image (to properly 'hide' it). It parses the source URI through `MediaStore` to resolve the actual file path and performs a direct file deletion (leveraging the application's `MANAGE_EXTERNAL_STORAGE` permission), whilst falling back to `ContentResolver.delete` when necessary.
+
+Update: Prevent Vault lock on external intents
+- Addressed issue where the Calculator app locked the Vault upon opening external applications like the Photo Picker and Document Exporter due to interpreting this behavior as a standard `onPause` app exit.
+- Introduced a Boolean `isExpectingExternalActivity` to `VaultSecurityManager` to whitelist controlled lifecycle events.
+- Updated `PhotosScreen` and `PhotosViewModel` to activate this flag prior to launching `photoPickerLauncher` or `exportLauncher`.
+- Refactored `MainActivity`'s `onResume` and `onPause` to intercept lifecycle changes and bypass the standard 1-second loading screen + Vault lock if the transition was explicitly expected.

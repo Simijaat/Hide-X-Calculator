@@ -102,14 +102,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (wasPaused) {
+        val wasExpecting = securityManager.isExpectingExternalActivity
+        securityManager.isExpectingExternalActivity = false
+        if (wasPaused && !wasExpecting) {
             _isLoading.value = true
             lifecycleScope.launch {
                 delay(1000)
                 _isLoading.value = false
-                wasPaused = false
             }
         }
+        wasPaused = false
     }
 
     override fun onPause() {
