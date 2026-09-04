@@ -56,3 +56,9 @@ Update: Advanced Secure Storage & Gallery Hiding Improvements
 - Enforced complete photo gallery hiding by aggressively deleting the physical `java.io.File` and triggering `MediaStore` deletions.
 - Introduced a `PhotoMetadata` system in `VaultStorageManager` (.meta files) to map encrypted UUID .bin files directly to their original path and filename upon import.
 - Modified Unhide (Export) functionality in `PhotosViewModel` and `PhotosScreen` to be seamless: it now leverages the `.meta` data to instantly write the decrypted image back to its original physical file location without prompting the user. It also automatically triggers `MediaScannerConnection.scanFile` to immediately restore visibility inside standard gallery apps.
+
+Update: Fix App Crash on Startup Due to Missing Permissions
+- Fixed an issue where the app crashed immediately upon launch because `VaultStorageManager` attempted to create a directory and `.nomedia` file in the external storage root without runtime permissions.
+- Implemented `requestStoragePermissions()` in `MainActivity.kt` to dynamically request `MANAGE_EXTERNAL_STORAGE` on Android 11+ and `WRITE_EXTERNAL_STORAGE` on older versions during `onCreate`.
+- Wrapped the `.nomedia` file creation in `VaultStorageManager.kt` within a `try/catch` block to prevent a fatal `IOException` or `SecurityException` if the directory access fails before the permission is formally granted by the user.
+- Utilized `securityManager.isExpectingExternalActivity = true` before launching the `ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION` intent to ensure the vault does not inadvertently lock itself during the permission flow.

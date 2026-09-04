@@ -22,9 +22,13 @@ class VaultStorageManager @Inject constructor(
             if (!dir.exists()) {
                 dir.mkdirs()
             }
-            val nomedia = File(dir, ".nomedia")
-            if (!nomedia.exists()) {
-                nomedia.createNewFile()
+            try {
+                val nomedia = File(dir, ".nomedia")
+                if (!nomedia.exists()) {
+                    nomedia.createNewFile()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
             return dir
         }
