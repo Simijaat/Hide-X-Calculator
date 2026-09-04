@@ -47,3 +47,12 @@ Update: Prevent Vault lock on external intents
 - Introduced a Boolean `isExpectingExternalActivity` to `VaultSecurityManager` to whitelist controlled lifecycle events.
 - Updated `PhotosScreen` and `PhotosViewModel` to activate this flag prior to launching `photoPickerLauncher` or `exportLauncher`.
 - Refactored `MainActivity`'s `onResume` and `onPause` to intercept lifecycle changes and bypass the standard 1-second loading screen + Vault lock if the transition was explicitly expected.
+
+Update: Advanced Secure Storage & Gallery Hiding Improvements
+- Migrated `VaultStorageManager` from SAF `OpenDocumentTree` to a highly secure internal file architecture targeting `Environment.getExternalStorageDirectory() + "/.SystemConfig/.vault"`.
+- This removes the initial setup folder prompt and utilizes the existing `MANAGE_EXTERNAL_STORAGE` permission, automatically hiding data with a generated `.nomedia` file.
+- Removed `requiresDirectorySelection` logic across `CalculatorViewModel` and `CalculatorScreen` allowing instant initialization bypass if `config.vdata` already exists.
+- Revamped `PhotosViewModel` import process: now explicitly resolves the original `MediaStore` physical path, copies the bytes, and converts output extensions to `.bin` to emulate advanced hidex apps.
+- Enforced complete photo gallery hiding by aggressively deleting the physical `java.io.File` and triggering `MediaStore` deletions.
+- Introduced a `PhotoMetadata` system in `VaultStorageManager` (.meta files) to map encrypted UUID .bin files directly to their original path and filename upon import.
+- Modified Unhide (Export) functionality in `PhotosViewModel` and `PhotosScreen` to be seamless: it now leverages the `.meta` data to instantly write the decrypted image back to its original physical file location without prompting the user. It also automatically triggers `MediaScannerConnection.scanFile` to immediately restore visibility inside standard gallery apps.

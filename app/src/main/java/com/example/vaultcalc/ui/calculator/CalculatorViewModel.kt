@@ -18,7 +18,7 @@ class CalculatorViewModel @Inject constructor(
     private val vaultStorageManager: com.example.vaultcalc.data.crypto.VaultStorageManager
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(CalculatorState(isPinSet = securityManager.isPinSet(), requiresDirectorySelection = !vaultStorageManager.hasDirectorySelected()))
+    private val _state = MutableStateFlow(CalculatorState(isPinSet = securityManager.isPinSet()))
     val state: StateFlow<CalculatorState> = _state.asStateFlow()
 
     private var currentInput = ""
@@ -28,7 +28,7 @@ class CalculatorViewModel @Inject constructor(
     init {
         // Initialize state
         _state.value = _state.value.copy(
-            isPinSet = securityManager.isPinSet(), requiresDirectorySelection = !vaultStorageManager.hasDirectorySelected(),
+            isPinSet = securityManager.isPinSet(),
             isConfirmingPin = false
         )
     }
@@ -59,15 +59,6 @@ class CalculatorViewModel @Inject constructor(
         }
     }
 
-    fun onDirectorySelected(uri: android.net.Uri?) {
-        if (uri != null) {
-            vaultStorageManager.vaultUri = uri
-            _state.value = _state.value.copy(
-                requiresDirectorySelection = false,
-                isPinSet = securityManager.isPinSet()
-            )
-        }
-    }
 
     fun cancelRecovery() {
         _state.value = _state.value.copy(
@@ -79,7 +70,7 @@ class CalculatorViewModel @Inject constructor(
     }
 
     fun onAction(action: CalculatorAction) {
-        if (_state.value.requiresDirectorySelection) return
+
 
         when (action) {
             is CalculatorAction.ButtonPress -> {
@@ -310,8 +301,7 @@ data class CalculatorState(
     val isConfirmingPin: Boolean = false,
     val isRecovering: Boolean = false,
     val recoveryQuestion: String = "",
-    val isSettingNewPin: Boolean = false,
-    val requiresDirectorySelection: Boolean = false
+    val isSettingNewPin: Boolean = false
 )
 
 sealed class CalculatorAction {

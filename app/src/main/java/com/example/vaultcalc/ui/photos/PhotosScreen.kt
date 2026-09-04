@@ -161,15 +161,6 @@ fun PhotoViewerOverlay(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("image/*")
-    ) { uri ->
-        if (uri != null) {
-            viewModel.exportPhoto(fileName, uri)
-            onClose() // Go back after export
-        }
-    }
-
     LaunchedEffect(fileName) {
         val bmp = viewModel.loadThumbnail(fileName, 300, 300)
         bitmap = bmp?.asImageBitmap()
@@ -193,8 +184,8 @@ fun PhotoViewerOverlay(
                     },
                     actions = {
                         IconButton(onClick = {
-                            viewModel.setExpectingExternalActivity(true)
-                            exportLauncher.launch("Exported_$fileName.jpg")
+                            viewModel.exportPhoto(fileName)
+                            onClose()
                         }) {
                             Icon(Icons.Default.IosShare, contentDescription = "Export (Unhide)", tint = Color.White)
                         }

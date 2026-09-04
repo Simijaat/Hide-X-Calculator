@@ -41,24 +41,7 @@ fun CalculatorScreen(
     val (recoveryAnswer, setRecoveryAnswer) = remember { mutableStateOf("") }
     val (newPin, setNewPin) = remember { mutableStateOf("") }
 
-    val documentTreeLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree()
-    ) { uri ->
-        viewModel.onDirectorySelected(uri)
-    }
 
-    if (state.requiresDirectorySelection) {
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text("Vault Setup") },
-            text = { Text("Please select a secure folder on your device to store and hide your vault data. This directory will hold your encrypted files.") },
-            confirmButton = {
-                Button(onClick = { documentTreeLauncher.launch(null) }) {
-                    Text("Select Folder")
-                }
-            }
-        )
-    }
 
     if (state.isRecovering) {
         AlertDialog(
