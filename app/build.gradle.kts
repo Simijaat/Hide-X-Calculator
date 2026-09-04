@@ -66,6 +66,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
     // Security Crypto
     implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
     implementation("androidx.documentfile:documentfile:1.0.1")

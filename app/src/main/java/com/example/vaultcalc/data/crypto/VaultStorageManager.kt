@@ -150,6 +150,76 @@ class VaultStorageManager @Inject constructor(
         val dir = DocumentFile.fromTreeUri(context, uri) ?: return false
         return dir.findFile(fileName) != null
     }
+    // Photo specific methods
+    private fun getPhotosDir(): DocumentFile? {
+        val uri = vaultUri ?: return null
+        val dir = DocumentFile.fromTreeUri(context, uri) ?: return null
+        var photosDir = dir.findFile("Photos")
+        if (photosDir == null) {
+            photosDir = dir.createDirectory("Photos")
+        }
+        return photosDir
+    }
+
+    fun listPhotos(): List<String> {
+        val photosDir = getPhotosDir() ?: return emptyList()
+        return photosDir.listFiles().mapNotNull { it.name }.filter { !it.startsWith(".") }
+    }
+
+    fun savePhoto(fileName: String, data: ByteArray) {
+        val photosDir = getPhotosDir() ?: return
+        var file = photosDir.findFile(fileName)
+        if (file == null) {
+            file = photosDir.createFile("application/octet-stream", fileName)
+        }
+        if (file == null) return
+        try {
+            context.contentResolver.openOutputStream(file.uri, "wt")?.use { stream ->
+                stream.write(data)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun exportPhoto(fileName: String, destUri: Uri): Boolean {
+        val photosDir = getPhotosDir() ?: return false
+        val file = photosDir.findFile(fileName) ?: return false
+        return try {
+            context.contentResolver.openInputStream(file.uri)?.use { input ->
+                context.contentResolver.openOutputStream(destUri)?.use { output ->
+                    input.copyTo(output)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    fun getPhotoUri(fileName: String): Uri? {
+        val photosDir = getPhotosDir() ?: return null
+        return photosDir.findFile(fileName)?.uri
+    }
+
+    fun readPhoto(fileName: String): ByteArray? {
+        val photosDir = getPhotosDir() ?: return null
+        val file = photosDir.findFile(fileName) ?: return null
+        return try {
+            context.contentResolver.openInputStream(file.uri)?.use { stream ->
+                stream.readBytes()
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun deletePhoto(fileName: String): Boolean {
+        val photosDir = getPhotosDir() ?: return false
+        val file = photosDir.findFile(fileName) ?: return false
+        return file.delete()
+    }
 }
 
 data class VaultConfig(

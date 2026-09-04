@@ -17,3 +17,15 @@ Validated the code compiling and linting properly with `./gradlew assembleDebug`
    - Relocated the Save (Bookmark) button from the URL text field into the 3-dots menu.
    - Improved URL bar text display by adjusting layout padding and setting appropriate constraints to fit the content cleanly.
    - Upgraded both the Browser top bar and the Home page search bar into advanced, premium floating pill styles with iOS-inspired aesthetics (BasicTextField, RoundedCornerShape(28.dp), Lock/Search icons inside the pill, matching colors).
+
+---
+Update: Implemented Photos App in Vault
+- Added `PhotosScreen` using Jetpack Compose with a 3-column grid layout as requested ("grid view Wagrah ki trah 2-3 style me photo dikhani hai").
+- Implemented `PhotosViewModel` to manage photo states, import, export, and delete logic.
+- Integrated Android's `PhotoPicker` for adding new photos seamlessly.
+- Used `VaultStorageManager` to securely save, load, delete, and list photos via Storage Access Framework (SAF) `.nomedia` hidden subfolder.
+- Used `VaultSecurityManager` alongside `VaultCryptoManager` to encrypt and decrypt the bytes of imported photos using the session's active master key to ensure robust privacy.
+- Included an internal full-screen photo viewer directly within the vault context.
+- Added 'Export' (Unhide) functionality to push photos back out.
+- Added 'Permanent Delete' functionality that permanently purges photos bypassing any recycle bin ("hamesha hamesha ke liye delete").
+- Wired up `VaultCalcNavigation.kt` to route the Vault's "Photos" icon to the newly built system, overriding the previous placeholder.
