@@ -198,6 +198,25 @@ class VaultSecurityManager @Inject constructor(
         return factory.generateSecret(spec).encoded
     }
 
+    fun encryptPhoto(data: ByteArray): ByteArray? {
+        val key = activeMasterKey ?: return null
+        val (encryptedData, iv) = VaultCryptoManager.encryptData(data, key)
+        // Prepend IV to encrypted data so we can decrypt it later
+        return iv + encryptedData
+    }
+
+    fun decryptPhoto(encryptedDataWithIv: ByteArray): ByteArray? {
+        val key = activeMasterKey ?: return null
+        if (encryptedDataWithIv.size <= 12) return null
+        val iv = encryptedDataWithIv.copyOfRange(0, 12)
+        val encryptedData = encryptedDataWithIv.copyOfRange(12, encryptedDataWithIv.size)
+        return try {
+            VaultCryptoManager.decryptData(encryptedData, iv, key)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun lockVault() {
         _isVaultUnlocked.value = false
     }

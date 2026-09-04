@@ -12,6 +12,7 @@ import com.example.vaultcalc.ui.calculator.CalculatorScreen
 import com.example.vaultcalc.ui.vault.VaultScreen
 import com.example.vaultcalc.ui.browser.BrowserScreen
 import com.example.vaultcalc.ui.download.DownloadCenterScreen
+import com.example.vaultcalc.ui.photos.PhotosScreen
 import com.example.vaultcalc.ui.PlaceholderScreen
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -100,7 +101,7 @@ fun VaultCalcNavigation(
             )
         }
         composable("photos") {
-            PlaceholderScreen("Photos", onNavigateBack = { navController.popBackStack() })
+            PhotosScreen(onNavigateBack = { navController.popBackStack() })
         }
         composable("videos") {
             PlaceholderScreen("Videos", onNavigateBack = { navController.popBackStack() })
