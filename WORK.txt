@@ -29,3 +29,15 @@ Update: Implemented Photos App in Vault
 - Added 'Export' (Unhide) functionality to push photos back out.
 - Added 'Permanent Delete' functionality that permanently purges photos bypassing any recycle bin ("hamesha hamesha ke liye delete").
 - Wired up `VaultCalcNavigation.kt` to route the Vault's "Photos" icon to the newly built system, overriding the previous placeholder.
+
+Update: Fixed Photo loading and importing logic
+- Added `loadThumbnail` and `loadFullImage` to `PhotosViewModel` to compute optimal `inSampleSize` when decoding photos to prevent UI freezes and OOM (Out of Memory) crashes on large images.
+- Replaced direct byte array decodes in `PhotosScreen.kt` with `loadThumbnail` in the grid and `loadFullImage` in the viewer.
+- Updated `VaultStorageManager` to open file streams with `"w"` instead of `"wt"` to prevent potential binary corruption on certain devices.
+- Switched `PickMultipleVisualMedia` to `GetMultipleContents` in `PhotosScreen.kt` to allow source URI modifications.
+- Implemented logic in `importPhotos` to delete the original source photo (hiding it from gallery) via `DocumentsContract.deleteDocument` and `contentResolver.delete` upon successful Vault import.
+
+Update: Improved Photo Deletion & Fixed UI Rendering
+- Fixed a bug in `PhotoViewerOverlay` where `loadThumbnail` was erroneously used instead of `loadFullImage`, which resulted in a blurry full-screen image viewing experience.
+- Resolved potential binary file corruption upon saving new configurations by ensuring `VaultStorageManager` strictly uses the `"wt"` (write & truncate) parameter for output streams.
+- Refactored `importPhotos` in `PhotosViewModel` to aggressively target and delete the original source image (to properly 'hide' it). It parses the source URI through `MediaStore` to resolve the actual file path and performs a direct file deletion (leveraging the application's `MANAGE_EXTERNAL_STORAGE` permission), whilst falling back to `ContentResolver.delete` when necessary.

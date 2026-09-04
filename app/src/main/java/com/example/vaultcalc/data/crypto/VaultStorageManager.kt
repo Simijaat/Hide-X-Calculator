@@ -79,7 +79,7 @@ class VaultStorageManager @Inject constructor(
 
         val file = getConfigFile() ?: return
         try {
-            context.contentResolver.openOutputStream(file.uri, "wt")?.use { stream ->
+            context.contentResolver.openOutputStream(file.uri, "w")?.use { stream ->
                 val obfuscated = Base64.encodeToString(json.toString().toByteArray(), Base64.NO_WRAP)
                 stream.write(obfuscated.toByteArray())
             }
@@ -124,7 +124,7 @@ class VaultStorageManager @Inject constructor(
         }
         if (file == null) return
         try {
-            context.contentResolver.openOutputStream(file.uri, "wt")?.use { stream ->
+            context.contentResolver.openOutputStream(file.uri, "w")?.use { stream ->
                 stream.write(data)
             }
         } catch (e: Exception) {
@@ -174,7 +174,7 @@ class VaultStorageManager @Inject constructor(
         }
         if (file == null) return
         try {
-            context.contentResolver.openOutputStream(file.uri, "wt")?.use { stream ->
+            context.contentResolver.openOutputStream(file.uri, "w")?.use { stream ->
                 stream.write(data)
             }
         } catch (e: Exception) {
