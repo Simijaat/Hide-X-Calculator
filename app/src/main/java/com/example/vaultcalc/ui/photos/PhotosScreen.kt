@@ -63,6 +63,7 @@ fun PhotosScreen(
                 },
                 actions = {
                     IconButton(onClick = {
+                        viewModel.setExpectingExternalActivity(true)
                         photoPickerLauncher.launch("image/*")
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "Add Photos", tint = Color.White)
@@ -191,7 +192,10 @@ fun PhotoViewerOverlay(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { exportLauncher.launch("Exported_$fileName.jpg") }) {
+                        IconButton(onClick = {
+                            viewModel.setExpectingExternalActivity(true)
+                            exportLauncher.launch("Exported_$fileName.jpg")
+                        }) {
                             Icon(Icons.Default.IosShare, contentDescription = "Export (Unhide)", tint = Color.White)
                         }
                         IconButton(onClick = { showDeleteConfirm = true }) {
