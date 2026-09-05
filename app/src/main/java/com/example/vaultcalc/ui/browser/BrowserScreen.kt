@@ -312,9 +312,12 @@ fun BrowserScreen(
                                 } else if (activeTab != null && activeTab.url.isNotEmpty()) {
                                     webView.loadUrl(activeTab.url)
                                 }
-                            } else if (activeTab != null && activeTab.url.isNotEmpty() && webView.url != activeTab.url) {
+                            } else if (activeTab != null && activeTab.url.isNotEmpty() && (webView.url == null || webView.url == "about:blank")) {
                                 webView.loadUrl(activeTab.url)
                             }
+
+                            // Background color fix for white screen
+                            webView.setBackgroundColor(android.graphics.Color.parseColor("#1E1E1E"))
                         },
                         factory = { context ->
                             WebView(context).apply {
@@ -326,6 +329,7 @@ fun BrowserScreen(
                                 settings.allowFileAccess = false
                                 settings.allowContentAccess = false
 
+                                setBackgroundColor(android.graphics.Color.parseColor("#1E1E1E"))
                                 webViewClient = SecureWebViewClient(
                                     onPageStarted = { url ->
                                         viewModel.updateCurrentTabUrl(url)

@@ -77,26 +77,27 @@ class PhotosViewModel @Inject constructor(
                         storageManager.savePhotoMetadata(fileName, originalName, realPath ?: "")
 
                         var deleted = false
-                        if (realPath != null) {
-                            val file = java.io.File(realPath)
-                            if (file.exists()) {
-                                deleted = file.delete()
-                            }
+                        try {
+                            val rows = context.contentResolver.delete(uri, null, null)
+                            if (rows > 0) deleted = true
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
+
                         try {
                             if (!deleted) {
-                                android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri)
+                                deleted = android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri)
                             }
                         } catch (e: Exception) {
-                            try {
-                                context.contentResolver.delete(uri, null, null)
-                            } catch (e2: Exception) {
-                                e2.printStackTrace()
-                            }
+                            e.printStackTrace()
                         }
 
                         if (realPath != null) {
-                             android.media.MediaScannerConnection.scanFile(context, arrayOf(realPath), null, null)
+                            val file = java.io.File(realPath)
+                            try {
+                                if (file.exists()) file.delete()
+                            } catch (e: Exception) {}
+                            android.media.MediaScannerConnection.scanFile(context, arrayOf(realPath), null, null)
                         }
                     }
                 } catch (e: Exception) {
