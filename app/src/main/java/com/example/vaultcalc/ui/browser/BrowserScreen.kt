@@ -59,12 +59,12 @@ fun BrowserScreen(
     var showMoreMenu by remember { mutableStateOf(false) }
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    val tabStates = remember { mutableStateMapOf<String, android.os.Bundle>() }
+    var currentTabId by remember { mutableStateOf(activeTabId) }
 
     LaunchedEffect(activeTabId) {
         val tab = tabs.find { it.id == activeTabId }
-        if (tab != null && tab.url.isNotEmpty()) {
-            urlInput = tab.url
-        }
+        urlInput = tab?.url ?: ""
     }
 
     BackHandler {
@@ -299,7 +299,20 @@ fun BrowserScreen(
                     AndroidView(
                         update = { webView ->
                             webViewRef = webView
-                            if (activeTab != null && activeTab.url.isNotEmpty() && webView.url != activeTab.url) {
+                            if (currentTabId != activeTabId) {
+                                currentTabId?.let { oldId ->
+                                    val bundle = android.os.Bundle()
+                                    webView.saveState(bundle)
+                                    tabStates[oldId] = bundle
+                                }
+                                currentTabId = activeTabId
+                                val state = tabStates[activeTabId]
+                                if (state != null) {
+                                    webView.restoreState(state)
+                                } else if (activeTab != null && activeTab.url.isNotEmpty()) {
+                                    webView.loadUrl(activeTab.url)
+                                }
+                            } else if (activeTab != null && activeTab.url.isNotEmpty() && webView.url != activeTab.url) {
                                 webView.loadUrl(activeTab.url)
                             }
                         },
