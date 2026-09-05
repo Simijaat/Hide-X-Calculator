@@ -34,7 +34,7 @@ class BrowserViewModel @Inject constructor(
             val savedTabs = browserRepository.getTabsSnapshot()
             if (savedTabs.isNotEmpty()) {
                 _tabs.value = savedTabs
-                _activeTabId.value = savedTabs.firstOrNull()?.id
+                addNewTab("")
             } else {
                 addNewTab("")
             }
