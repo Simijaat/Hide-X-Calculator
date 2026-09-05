@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -42,7 +41,7 @@ fun PhotosScreen(
     val photos by viewModel.photos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var selectedPhoto by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
+
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
@@ -159,7 +158,7 @@ fun PhotoViewerOverlay(
 ) {
     var bitmap by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+
 
     LaunchedEffect(fileName) {
         val bmp = viewModel.loadThumbnail(fileName, 300, 300)

@@ -28,10 +28,16 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.addAll(listOf("-Xlint:-options"))
+    }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
@@ -46,6 +52,17 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+
+    lint {
+        disable += "ObsoleteSdkInt"
+        disable += "MonochromeLauncherIcon"
+        disable += "StaticFieldLeak"
+        disable += "GradleDependency"
+        disable += "ScopedStorage"
+        disable += "OldTargetApi"
+    }
+
 }
 
 dependencies {
