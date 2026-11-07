@@ -1,3 +1,7 @@
+Update: Fixed Android CI build-tools issue
+- Modified `.github/workflows/android.yml` to dynamically find the latest available `build-tools` directory instead of hardcoding `33.0.1`.
+- This prevents the GitHub Actions `ubuntu-latest` runner from failing the `aapt` and `apksigner` commands when newer or different build-tools are pre-installed.
+
 Completed Browser UI enhancement and secured the Vault background view.
 
 1. MainActivity changes:
